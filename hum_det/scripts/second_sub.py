@@ -12,11 +12,11 @@ ROS_IMAGE_TOPIC = "/newstereo/left/image_raw"
 # ROS_IMAGE_TOPIC = "/pylon_camera_node/image_raw"
 # ROS_IMAGE_TOPIC = "/usb_cam/image_raw"
 # ROS_IMAGE_TOPIC = "/center/image_raw"
-HEIGHT = 512
-WIDTH = 640
+HEIGHT = 480
+WIDTH = 744
 WINDOW_ORIG = "original"
-WINDOW_YOLOV8 = "yolov8"
-FREQ = 20
+WINDOW_YOLOV8 = "yolov8s"
+FREQ = 1
 
 count = 0
 
@@ -25,10 +25,6 @@ def image_callback(msg: Image, cv_bridge: CvBridge, model) -> None:
 	img_bgr = cv_bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
 	img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 	img_rgb = cv2.resize(img_rgb, (WIDTH, HEIGHT))
-
-	# preds = model.predict(img_rgb, stream=True)
-	# cv2.imshow(WINDOW_ORIG, img_rgb)
-	# cv2.imshow(WINDOW_YOLOV8S, Image.fromarray(preds[0].plot()[..., ::-1]))
 
 	if count % FREQ == 0:
 		preds = model.predict(img_rgb)
@@ -46,22 +42,15 @@ def main() -> None:
 		rospy.loginfo(f"Encoding: {sample.encoding}, Resolution: {sample.width, sample.height}")
 	cv_bridge: CvBridge = CvBridge()
 
-# ------------------------------------------------------------------
-	model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_ep20-60_yolov8s/best.pt")
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_ep20-60_yolov8s/best.pt") # bad
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer_ep0-20_yolov8s/best.pt")
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer2_ep0-20_yolov8s/best.pt") # bad
+	model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_ep0-20_yolov8s/best.pt")
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/yolov8s.pt")
-	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_ep0-20_yolov8x/best.pt")
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_ep0-20_yolov8x/best.pt") # bad + speed bad
 	# print(model.info())
-	# preds = model.predict("../test/human_27.jpg")
-	# for pred in preds:
-	# 	print(pred.names)
-	# for pred in preds:
-	# 	print(pred.boxes)
-	# for pred in preds:
-	# 	pred.save(filename="../test/preds/usar_ep20-60_yolov8s/human_27.jpg")
-# ------------------------------------------------------------------
 
-	# rospy.Subscriber(ROS_IMAGE_TOPIC, Image, lambda msg: image_callback(msg, cv_bridge, model), queue_size = None)
-	rospy.Subscriber(ROS_IMAGE_TOPIC, Image, lambda msg: image_callback(msg, cv_bridge, model), queue_size = 10000)
+	rospy.Subscriber(ROS_IMAGE_TOPIC, Image, lambda msg: image_callback(msg, cv_bridge, model), queue_size=None)
 
 	rospy.spin()
 
