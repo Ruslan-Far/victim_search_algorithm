@@ -20,11 +20,11 @@ def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
 	img_rgb = cv2.resize(img_rgb, (WIDTH, HEIGHT))
 
 	publisher = rospy.Publisher("/newstereo/left/image_raw", Image, queue_size = 10)
-	image = cv_bridge.cv2_to_imgmsg(img_rgb, "bgr8")
+	image = cv_bridge.cv2_to_imgmsg(img_rgb, "rgb8")
 	publisher.publish(image)
 
-	cv2.imshow(WINDOW_ORIG, img_rgb)
-	cv2.waitKey(1)
+	# cv2.imshow(WINDOW_ORIG, img_rgb)
+	# cv2.waitKey(1)
 
 
 def main() -> None:
