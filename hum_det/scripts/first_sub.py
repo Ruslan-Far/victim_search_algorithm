@@ -12,8 +12,8 @@ import time
 ROS_NODE_NAME = "first_sub"
 # ROS_IMAGE_TOPIC = "/newstereo/left/image_raw"
 ROS_IMAGE_TOPIC = "/stereo/left/image_raw"
-TRAIN_HEIGHT = 640
-TRAIN_WIDTH = 640
+TRAIN_HEIGHT = 608
+TRAIN_WIDTH = 608
 HEIGHT = 480
 WIDTH = 744
 WINDOW_ORIG = "original"
