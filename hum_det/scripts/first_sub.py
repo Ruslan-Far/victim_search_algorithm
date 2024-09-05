@@ -8,10 +8,14 @@ import numpy as np
 import time
 
 # Внимание! Теперь файл do_color.py не нужен!-------------------------------------------------------------------------------
+# питоновские файлы можно не перекомпилировать
 
 ROS_NODE_NAME = "first_sub"
 # ROS_IMAGE_TOPIC = "/newstereo/left/image_raw"
-ROS_IMAGE_TOPIC = "/stereo/left/image_raw"
+# если запускать на Инженере (иначе - закомментить)
+# ROS_IMAGE_TOPIC = "/stereo/left/image_raw"
+# если запускать на своем ноутбуке (иначе - закомментить)
+ROS_IMAGE_TOPIC = "/rtsp_camera/image_rect_color"
 TRAIN_HEIGHT = 608
 TRAIN_WIDTH = 608
 HEIGHT = 480
@@ -24,11 +28,20 @@ count = 0
 CONFIDENCE = 0.25
 SCORE_THRESHOLD = 0.25
 IOU_THRESHOLD = 0.5
-config_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/cfg/usar_engineer3_yolov3.cfg"
-weights_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/very_very_good_weights/usar_engineer3_yolov3_best_2018.weights"
+
+# если запускать на Инженере (иначе - закомментить)
+# config_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/cfg/usar_engineer3_yolov3.cfg"
+# weights_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/very_very_good_weights/usar_engineer3_yolov3_best_2018.weights"
+# если запускать на своем ноутбуке (иначе - закомментить)
+config_path = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/cfg/usar_engineer3_yolov3.cfg"
+weights_path = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/very_very_good_weights/usar_engineer3_yolov3_best_2018.weights"
+
 font_scale = 1
 thickness = 2
-labels = open("/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/data/usar_engineer3.names").read().strip().split("\n")
+# если запускать на Инженере (иначе - закомментить)
+# labels = open("/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/data/usar_engineer3.names").read().strip().split("\n")
+# если запускать на своем ноутбуке (иначе - закомментить)
+labels = open("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/data/usar_engineer3.names").read().strip().split("\n")
 colors = np.array([[0, 0, 255], [203, 192, 255], [0, 102, 255], [0, 255, 255]], dtype="uint8")
 
 net = cv2.dnn.readNetFromDarknet(config_path, weights_path)
@@ -40,8 +53,10 @@ def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
 	global count
 	# иначе будет серое байеризованное
 	img_bgr = cv_bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-	# иначе будет bgr. И намного хуже будет распознавать нейронка
-	img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+	# иначе будет bgr (если запускать на Инженере (иначе - закомментить)). И намного хуже будет распознавать нейронка
+	# img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+	# если запускать на своем ноутбуке (иначе - закомментить)
+	img_rgb = img_bgr
 	# можно и не делать, так как далее все сделает cv2.dnn.blobFromImage
 	img_rgb = cv2.resize(img_rgb, (TRAIN_WIDTH, TRAIN_HEIGHT))
 
