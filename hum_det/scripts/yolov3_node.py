@@ -27,6 +27,7 @@ WINDOW_YOLOV3 = "yolov3"
 FREQ = 30
 img_callback_count = 0
 ROS_IMG_PUB_TOPIC = "/detected/stereo/left/image_raw"
+ROS_DET_STATUS_SUB_TOPIC = "/gui"
 
 CONFIDENCE = 0.5
 SCORE_THRESHOLD = 0.5
@@ -80,12 +81,26 @@ def print_time_took_mean_sum(time_took):
 		time_took_count = 0
 
 
-def img_callback(msg: Image, cv_bridge: CvBridge) -> None:
+def run_img_publisher(img_publisher, img_rgb, cv_bridge):
+	msg = cv_bridge.cv2_to_imgmsg(img_rgb)
+	img_publisher.publish(msg)
+
+
+# получаем статус режима "human_detection" в gui
+def det_status_callback(msg):
+	global IS_ON
+
+	if IS_ON != msg.is_on:
+		IS_ON = msg.is_on
+		if IS_ON:
+			reset_fields()
+
+
+def img_callback(msg: Image, cv_bridge: CvBridge, img_publisher: rospy.Publisher) -> None:
 	global IS_ON
 	global img_callback_count
 
 	if not IS_ON:
-		reset_fields()
 		return
 	# иначе будет серое байеризованное
 	img_bgr = cv_bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
@@ -163,8 +178,10 @@ def img_callback(msg: Image, cv_bridge: CvBridge) -> None:
 				# now put the text (label: confidence %)
 				cv2.putText(img_rgb, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX,
 					fontScale=font_scale, color=(0, 0, 0), thickness=thickness)
-		# для показа
 		img_rgb = cv2.resize(img_rgb, (WIDTH, HEIGHT))
+		# отправить для показа в GUI
+		run_img_publisher(img_publisher, img_rgb, cv_bridge)
+		# просто для показа
 		cv2.imshow(WINDOW_YOLOV3, img_rgb)
 		cv2.waitKey(1)
 	img_callback_count += 1
@@ -181,7 +198,9 @@ def main() -> None:
 		rospy.loginfo(f"Encoding: {sample.encoding}, Resolution: {sample.width, sample.height}")
 	cv_bridge: CvBridge = CvBridge()
 
-	rospy.Subscriber(ROS_IMG_SUB_TOPIC, Image, lambda msg: img_callback(msg, cv_bridge), queue_size = None)
+	img_publisher = rospy.Publisher(ROS_IMG_PUB_TOPIC, Image, queue_size=1)
+	rospy.Subscriber(ROS_IMG_SUB_TOPIC, Image, lambda msg: img_callback(msg, cv_bridge, img_publisher), queue_size=None)
+	rospy.Subscriber(ROS_DET_STATUS_SUB_TOPIC, DetectionStatus, lambda msg: det_status_callback(msg), queue_size=None)
 
 	rospy.spin()
 
