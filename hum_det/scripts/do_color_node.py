@@ -6,7 +6,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from typing import Final
 
-ROS_NODE_NAME: Final[str] = "do_color"
+ROS_NODE_NAME: Final[str] = "do_color_node"
 # ROS_IMAGE_TOPIC: Final[str] = "/pylon_camera_node/image_raw"
 # ROS_IMAGE_TOPIC: Final[str] = "/usb_cam/image_raw"
 ROS_IMAGE_TOPIC: Final[str] = "/stereo/left/image_raw"

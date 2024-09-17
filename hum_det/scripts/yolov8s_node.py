@@ -6,7 +6,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from ultralytics import YOLO
 
-ROS_NODE_NAME = "second_sub"
+ROS_NODE_NAME = "yolov8s_node"
 ROS_IMAGE_TOPIC = "/newstereo/left/image_raw"
 # ROS_IMAGE_TOPIC = "/stereo/left/image_raw"
 # ROS_IMAGE_TOPIC = "/pylon_camera_node/image_raw"

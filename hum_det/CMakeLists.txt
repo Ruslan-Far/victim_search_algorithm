@@ -163,9 +163,9 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  scripts/first_sub.py
-  scripts/second_sub.py
-  scripts/do_color.py
+  scripts/yolov3_node.py
+  scripts/yolov8s_node.py
+  scripts/do_color_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

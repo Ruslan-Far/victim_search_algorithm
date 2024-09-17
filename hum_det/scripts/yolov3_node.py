@@ -10,12 +10,14 @@ import time
 # Внимание! Теперь файл do_color.py не нужен!-------------------------------------------------------------------------------
 # питоновские файлы можно не перекомпилировать
 
-ROS_NODE_NAME = "first_sub"
-# ROS_IMAGE_TOPIC = "/newstereo/left/image_raw"
+ROS_NODE_NAME = "yolov3_node"
+IS_ON = True # по умолчанию алгоритм работать не будет. Как из GUI придет сигнал о начале работы, он начнет работу (True)
 # если запускать на Инженере (иначе - закомментить)
-# ROS_IMAGE_TOPIC = "/stereo/left/image_raw"
+# ROS_IMG_SUB_TOPIC = "/stereo/left/image_raw"
 # если запускать на своем ноутбуке (иначе - закомментить)
-ROS_IMAGE_TOPIC = "/rtsp_camera/image_rect_color"
+# ROS_IMG_SUB_TOPIC = "/rtsp_camera/image_rect_color"
+# и
+ROS_IMG_SUB_TOPIC = "/usb_cam/image_raw"
 TRAIN_HEIGHT = 608
 TRAIN_WIDTH = 608
 HEIGHT = 480
@@ -23,10 +25,11 @@ WIDTH = 744
 WINDOW_ORIG = "original"
 WINDOW_YOLOV3 = "yolov3"
 FREQ = 30
-count = 0
+img_callback_count = 0
+ROS_IMG_PUB_TOPIC = "/detected/stereo/left/image_raw"
 
-CONFIDENCE = 0.25
-SCORE_THRESHOLD = 0.25
+CONFIDENCE = 0.5
+SCORE_THRESHOLD = 0.5
 IOU_THRESHOLD = 0.5
 
 # если запускать на Инженере (иначе - закомментить)
@@ -49,25 +52,58 @@ net = cv2.dnn.readNetFromDarknet(config_path, weights_path)
 ln = net.getLayerNames()
 ln = [ln[int(i - 1)] for i in net.getUnconnectedOutLayers()]
 
-def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
-	global count
+time_took_sum = 0
+time_took_count = 0
+
+
+def reset_fields():
+	global img_callback_count
+	global time_took_sum
+	global time_took_count
+
+	img_callback_count = 0
+	time_took_sum = 0
+	time_took_count = 0
+	print("reset_fields")
+
+
+# на основе N итераций посчитать, сколько времени в среднем занимает вывод нейросети за одну итерацию
+def print_time_took_mean_sum(time_took):
+	global time_took_sum
+	global time_took_count
+
+	time_took_sum += time_took
+	time_took_count += 1
+	if time_took_count == 10: # N == 10
+		print("time_took_mean_sum:", time_took_sum / time_took_count)
+		time_took_sum = 0
+		time_took_count = 0
+
+
+def img_callback(msg: Image, cv_bridge: CvBridge) -> None:
+	global IS_ON
+	global img_callback_count
+
+	if not IS_ON:
+		reset_fields()
+		return
 	# иначе будет серое байеризованное
 	img_bgr = cv_bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 	# иначе будет bgr (если запускать на Инженере (иначе - закомментить)). И намного хуже будет распознавать нейронка
 	# img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 	# если запускать на своем ноутбуке (иначе - закомментить)
 	img_rgb = img_bgr
-	# можно и не делать, так как далее все сделает cv2.dnn.blobFromImage
+	# ОБЯЗАТЕЛЬНО НАДО ДЕЛАТЬ ВМЕСТЕ С cv2.dnn.blobFromImage
 	img_rgb = cv2.resize(img_rgb, (TRAIN_WIDTH, TRAIN_HEIGHT))
 
-	if count % FREQ == 0:
-		# blob = cv2.dnn.blobFromImage(img_rgb, 1/255.0, (416, 416), swapRB=True, crop=False)
-		blob = cv2.dnn.blobFromImage(img_rgb, 1/255.0, (TRAIN_WIDTH, TRAIN_HEIGHT), swapRB=True, crop=False)
+	if img_callback_count == 0:
+		blob = cv2.dnn.blobFromImage(img_rgb, 1/255.0, (TRAIN_WIDTH, TRAIN_HEIGHT), swapRB=False, crop=False) # edited swapRB
 		net.setInput(blob)
 		start = time.perf_counter()
 		layer_outputs = net.forward(ln)
 		time_took = time.perf_counter() - start
-		print("Time took:", time_took)
+		print("time_took:", time_took)
+		print_time_took_mean_sum(time_took)
 		boxes, confidences, class_ids = [], [], []
 
 		# loop over each of the layer outputs
@@ -87,7 +123,6 @@ def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
 					# returns the center (x, y)-coordinates of the bounding
 					# box followed by the boxes' width and height
 
-					# box = detection[:4] * np.array([WIDTH, HEIGHT, WIDTH, HEIGHT])
 					box = detection[:4] * np.array([TRAIN_WIDTH, TRAIN_HEIGHT, TRAIN_WIDTH, TRAIN_HEIGHT])
 					(centerX, centerY, width, height) = box.astype("int")
 
@@ -132,21 +167,21 @@ def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
 		img_rgb = cv2.resize(img_rgb, (WIDTH, HEIGHT))
 		cv2.imshow(WINDOW_YOLOV3, img_rgb)
 		cv2.waitKey(1)
-	count += 1
-	if count == FREQ:
-		count = 0
-	# cv2.imshow(WINDOW_YOLOV3, img_rgb)
+	img_callback_count += 1
+	if img_callback_count == FREQ:
+		img_callback_count = 0
+	# cv2.imshow(WINDOW_ORIG, img_rgb) # вдруг пригодится в процессе экспериментов
 	# cv2.waitKey(1)
 
 
 def main() -> None:
 	rospy.init_node(ROS_NODE_NAME)
-	sample: Image = rospy.wait_for_message(ROS_IMAGE_TOPIC, Image, timeout = 3.0)
+	sample: Image = rospy.wait_for_message(ROS_IMG_SUB_TOPIC, Image, timeout = 3.0)
 	if sample is not None:
 		rospy.loginfo(f"Encoding: {sample.encoding}, Resolution: {sample.width, sample.height}")
 	cv_bridge: CvBridge = CvBridge()
 
-	rospy.Subscriber(ROS_IMAGE_TOPIC, Image, lambda msg: image_callback(msg, cv_bridge), queue_size = None)
+	rospy.Subscriber(ROS_IMG_SUB_TOPIC, Image, lambda msg: img_callback(msg, cv_bridge), queue_size = None)
 
 	rospy.spin()
 
