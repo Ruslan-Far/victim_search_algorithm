@@ -6,7 +6,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import numpy as np
 import time
-from hum_det.msg import DetectionStatus
+from hum_det.srv import *
 
 # Внимание! Теперь файл do_color.py не нужен!-------------------------------------------------------------------------------
 # питоновские файлы можно не перекомпилировать
@@ -28,7 +28,7 @@ WINDOW_YOLOV3 = "yolov3"
 FREQ = 30
 img_callback_count = 0
 IMG_PUB_TOPIC = "/detected/stereo/left/image_raw"
-DET_STATUS_SUB_TOPIC = "/gui"
+DET_MODE_SWITCH_SRV = "det_mode_switch"
 
 CONFIDENCE = 0.5
 SCORE_THRESHOLD = 0.5
@@ -87,14 +87,14 @@ def run_img_publisher(img_publisher, img_rgb, cv_bridge):
 	img_publisher.publish(msg)
 
 
-# получаем статус режима "human_detection" в gui и переключаем
-def det_status_callback(msg):
+# переключаем режим "human_detection"
+def handle_det_mode_switch(req):
 	global IS_ON
 
-	if IS_ON != msg.is_on:
-		IS_ON = msg.is_on
-		if IS_ON:
-			reset_fields()
+	IS_ON = req.is_on
+	if IS_ON:
+		reset_fields()
+	return DetModeSwitchResponse(0)
 
 
 def img_callback(msg: Image, cv_bridge: CvBridge, img_publisher: rospy.Publisher) -> None:
@@ -201,7 +201,7 @@ def main() -> None:
 
 	img_publisher = rospy.Publisher(IMG_PUB_TOPIC, Image, queue_size=1)
 	rospy.Subscriber(IMG_SUB_TOPIC, Image, lambda msg: img_callback(msg, cv_bridge, img_publisher), queue_size=None)
-	rospy.Subscriber(DET_STATUS_SUB_TOPIC, DetectionStatus, lambda msg: det_status_callback(msg), queue_size=None)
+	rospy.Service(DET_MODE_SWITCH_SRV, DetModeSwitch, handle_det_mode_switch)
 
 	rospy.spin()
 
