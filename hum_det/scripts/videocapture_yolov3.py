@@ -13,11 +13,11 @@ WINDOW_YOLOV3 = "yolov3"
 CONFIDENCE = 0.25
 SCORE_THRESHOLD = 0.25
 IOU_THRESHOLD = 0.5
-config_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/cfg/usar_engineer3_yolov3.cfg"
-weights_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/very_very_good_weights/usar_engineer3_yolov3_best_2018.weights"
+config_path = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/cfg/usar_engineer3_yolov3.cfg"
+weights_path = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/very_very_good_weights/usar_engineer3_yolov3_best_2018.weights"
 font_scale = 1
 thickness = 2
-labels = open("/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/data/usar_engineer3.names").read().strip().split("\n")
+labels = open("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/data/usar_engineer3.names").read().strip().split("\n")
 colors = np.array([[0, 0, 255], [203, 192, 255], [0, 102, 255], [0, 255, 255]], dtype="uint8")
 
 net = cv2.dnn.readNetFromDarknet(config_path, weights_path)
@@ -26,8 +26,8 @@ ln = net.getLayerNames()
 ln = [ln[int(i - 1)] for i in net.getUnconnectedOutLayers()]
 
 # получаем видео с камеры
-video=cv2.VideoCapture("rtsp://192.168.0.99:554/av0_0")
-# video=cv2.VideoCapture(11)
+# video=cv2.VideoCapture("rtsp://192.168.0.99:554/av0_0")
+video=cv2.VideoCapture(0)
 # пока не нажата любая клавиша — выполняем цикл
 while cv2.waitKey(1)<0:
 	hasFrame, img_rgb = video.read()
