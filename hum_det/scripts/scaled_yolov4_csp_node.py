@@ -12,13 +12,13 @@ from hum_det.msg import DetectionStatus
 # питоновские файлы можно не перекомпилировать
 
 NODE_NAME = "scaled_yolov4_csp_node"
-IS_ON = False # по умолчанию алгоритм работать не будет. Как из GUI придет сигнал о начале работы, он начнет работу (True)
+IS_ON = True # по умолчанию алгоритм работать не будет. Как из GUI придет сигнал о начале работы, он начнет работу (True)
 # если запускать на Инженере (иначе - закомментить)
-# IMG_SUB_TOPIC = "/stereo/left/image_raw"
+IMG_SUB_TOPIC = "/stereo/left/image_raw"
 # если запускать на своем ноутбуке (иначе - закомментить)
 # IMG_SUB_TOPIC = "/rtsp_camera/image_rect_color"
 # и
-IMG_SUB_TOPIC = "/usb_cam/image_raw"
+# IMG_SUB_TOPIC = "/usb_cam/image_raw"
 # TRAIN_HEIGHT = 512
 # TRAIN_WIDTH = 512
 TRAIN_HEIGHT = 608
@@ -36,18 +36,18 @@ CONFIDENCE_THRESHOLD = 0.5
 IOU_THRESHOLD = 0.5
 
 # если запускать на Инженере (иначе - закомментить)
-# config_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/cfg/scaled-yolov4-csp.cfg"
-# weights_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/weights/scaled-yolov4-csp.weights"
+config_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/cfg/scaled-yolov4-csp.cfg"
+weights_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/weights/scaled-yolov4-csp.weights"
 # если запускать на своем ноутбуке (иначе - закомментить)
-config_path = "/home/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/cfg/scaled-yolov4-csp.cfg"
-weights_path = "/home/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/weights/scaled-yolov4-csp.weights"
+# config_path = "/home/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/cfg/scaled-yolov4-csp.cfg"
+# weights_path = "/home/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/weights/scaled-yolov4-csp.weights"
 
 font_scale = 1
 thickness = 2
 # если запускать на Инженере (иначе - закомментить)
-# labels = open("/home/lirs/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/data/coco.names").read().strip().split("\n")
+labels = open("/home/lirs/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/data/coco.names").read().strip().split("\n")
 # если запускать на своем ноутбуке (иначе - закомментить)
-labels = open("/home/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/data/coco.names").read().strip().split("\n")
+# labels = open("/home/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/data/coco.names").read().strip().split("\n")
 # colors = np.array([[0, 0, 255], [203, 192, 255], [0, 102, 255], [0, 255, 255]], dtype="uint8")
 colors = np.zeros((80, 3))
 
@@ -108,9 +108,9 @@ def img_callback(msg: Image, cv_bridge: CvBridge, img_publisher: rospy.Publisher
 	# иначе будет серое байеризованное
 	img_bgr = cv_bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 	# иначе будет bgr (если запускать на Инженере (иначе - закомментить)). И намного хуже будет распознавать нейронка
-	# img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+	img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 	# если запускать на своем ноутбуке (иначе - закомментить)
-	img_rgb = img_bgr
+	# img_rgb = img_bgr
 	# ОБЯЗАТЕЛЬНО НАДО ДЕЛАТЬ ВМЕСТЕ С cv2.dnn.blobFromImage
 	img_rgb = cv2.resize(img_rgb, (TRAIN_WIDTH, TRAIN_HEIGHT))
 
