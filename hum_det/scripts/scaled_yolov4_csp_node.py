@@ -19,10 +19,8 @@ IS_ON = False # по умолчанию алгоритм работать не �
 # IMG_SUB_TOPIC = "/rtsp_camera/image_rect_color"
 # и
 IMG_SUB_TOPIC = "/usb_cam/image_raw"
-# TRAIN_HEIGHT = 512
-# TRAIN_WIDTH = 512
-TRAIN_HEIGHT = 608
-TRAIN_WIDTH = 608
+TRAIN_HEIGHT = 640
+TRAIN_WIDTH = 640
 HEIGHT = 480
 WIDTH = 744
 WINDOW_ORIG = "original"
@@ -36,20 +34,19 @@ CONFIDENCE_THRESHOLD = 0.5
 IOU_THRESHOLD = 0.5
 
 # если запускать на Инженере (иначе - закомментить)
-# config_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/cfg/scaled-yolov4-csp.cfg"
-# weights_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/weights/scaled-yolov4-csp.weights"
+# config_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/cfg/usar_engineer3_scaled-yolov4-csp.cfg"
+# weights_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/weights/usar_engineer3_scaled-yolov4-csp_best_1836.weights"
 # если запускать на своем ноутбуке (иначе - закомментить)
-config_path = "/home/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/cfg/scaled-yolov4-csp.cfg"
-weights_path = "/home/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/weights/scaled-yolov4-csp.weights"
+config_path = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/cfg/usar_engineer3_scaled-yolov4-csp.cfg"
+weights_path = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/weights/usar_engineer3_scaled-yolov4-csp_best_1836.weights"
 
 font_scale = 1
 thickness = 2
 # если запускать на Инженере (иначе - закомментить)
-# labels = open("/home/lirs/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/data/coco.names").read().strip().split("\n")
+# labels = open("/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/data/usar_engineer3.names").read().strip().split("\n")
 # если запускать на своем ноутбуке (иначе - закомментить)
-labels = open("/home/ruslan/kpfu/magistracy/ml_models/scaled-yolov4-csp/data/coco.names").read().strip().split("\n")
-# colors = np.array([[0, 0, 255], [203, 192, 255], [0, 102, 255], [0, 255, 255]], dtype="uint8")
-colors = np.zeros((80, 3))
+labels = open("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/data/usar_engineer3.names").read().strip().split("\n")
+colors = np.array([[0, 0, 255], [203, 192, 255], [0, 102, 255], [0, 255, 255]], dtype="uint8")
 
 net = cv2.dnn.readNetFromDarknet(config_path, weights_path)
 
