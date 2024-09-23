@@ -1,0 +1,6 @@
+<!-- ЗАПУСКАТЬ ВО ВТОРУЮ ОЧЕРЕДЬ -->
+<launch>
+	<node name="do_color_node" pkg="hum_det" type="do_color_node.py" output="screen"></node>
+	<node name="stereo_sub_node" pkg="hum_det" type="stereo_sub_node.py" output="screen"></node>
+	<node name="det_stereo_sub_node" pkg="hum_det" type="det_stereo_sub_node.py" output="screen"></node>
+</launch>

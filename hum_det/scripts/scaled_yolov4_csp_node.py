@@ -8,6 +8,8 @@ import numpy as np
 import time
 from hum_det.msg import DetectionStatus
 
+# ЗАПУСКАТЬ В ТРЕТЬЮ ОЧЕРЕДЬ. А после этого В ЧЕТВЕРТУЮ ОЧЕРЕДЬ запустить Kazam
+
 # Внимание! Теперь файл do_color.py не нужен!-------------------------------------------------------------------------------
 # питоновские файлы можно не перекомпилировать
 
@@ -193,9 +195,9 @@ def img_callback(msg: Image, cv_bridge: CvBridge, img_publisher: rospy.Publisher
 
 def main() -> None:
 	rospy.init_node(NODE_NAME)
-	sample: Image = rospy.wait_for_message(IMG_SUB_TOPIC, Image, timeout = 3.0)
-	if sample is not None:
-		rospy.loginfo(f"Encoding: {sample.encoding}, Resolution: {sample.width, sample.height}")
+	# sample: Image = rospy.wait_for_message(IMG_SUB_TOPIC, Image, timeout = 3.0)
+	# if sample is not None:
+		# rospy.loginfo(f"Encoding: {sample.encoding}, Resolution: {sample.width, sample.height}")
 	cv_bridge: CvBridge = CvBridge()
 
 	img_publisher = rospy.Publisher(IMG_PUB_TOPIC, Image, queue_size=1)

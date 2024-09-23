@@ -170,6 +170,8 @@ catkin_install_python(PROGRAMS
   scripts/scaled_yolov4_csp_node.py
   scripts/yolov4_node.py
   scripts/yolov4_tiny_node.py
+  scripts/stereo_sub_node.py
+  scripts/det_stereo_sub_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
