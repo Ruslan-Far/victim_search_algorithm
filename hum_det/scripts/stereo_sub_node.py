@@ -7,8 +7,8 @@ from cv_bridge import CvBridge
 import numpy as np
 
 NODE_NAME = "stereo_sub_node"
-# IMG_SUB_TOPIC = "/stereo/left/image_raw"
-IMG_SUB_TOPIC = "/usb_cam/image_raw"
+IMG_SUB_TOPIC = "/stereo/left/image_raw"
+# IMG_SUB_TOPIC = "/usb_cam/image_raw"
 HEIGHT = 640
 WIDTH = 640
 WINDOW = "/stereo/left/image_raw"
