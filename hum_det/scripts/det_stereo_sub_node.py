@@ -6,6 +6,8 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import numpy as np
 
+# МОЖНО МЕНЯТЬ И ЗАПУСКАТЬ ТОЛЬКО В ДАННОЙ ВЕТКЕ!!! ЗАПУСКАТЬ ТОЛЬКО НА СВОЕМ НОУТБУКЕ!!!
+
 NODE_NAME = "det_stereo_sub_node"
 IMG_SUB_TOPIC = "/detected/stereo/left/image_raw"
 HEIGHT = 640
@@ -14,12 +16,7 @@ WINDOW = "/detected/stereo/left/image_raw"
 
 
 def img_callback(msg: Image, cv_bridge: CvBridge) -> None:
-	# иначе будет серое байеризованное
-	# img_bgr = cv_bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 	img_bgr = cv_bridge.imgmsg_to_cv2(msg)
-	# иначе будет bgr (если запускать на Инженере (иначе - закомментить)). И намного хуже будет распознавать нейронка
-	# img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-	# если запускать на своем ноутбуке (иначе - закомментить)
 	img_rgb = img_bgr
 	img_rgb = cv2.resize(img_rgb, (WIDTH, HEIGHT))
 	cv2.imshow(WINDOW, img_rgb)

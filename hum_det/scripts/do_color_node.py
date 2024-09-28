@@ -7,6 +7,8 @@ from cv_bridge import CvBridge
 from typing import Final
 from hum_det.msg import DetectionStatus
 
+# МОЖНО МЕНЯТЬ И ЗАПУСКАТЬ ТОЛЬКО В ДАННОЙ ВЕТКЕ!!! ЗАПУСКАТЬ ТОЛЬКО НА СВОЕМ НОУТБУКЕ!!!
+
 # НЕОБХОДИМ для экспериментов. Будет прослушивать камеру робота и преобразовывать ее видеопоток в небайеризированный rgb формат
 ROS_NODE_NAME: Final[str] = "do_color_node"
 # ROS_IMAGE_TOPIC: Final[str] = "/usb_cam/image_raw"
@@ -17,6 +19,7 @@ FREQ = 1 # ВАЖНО!!! Иначе (если прослушивать топи�
 img_callback_count = 0
 IS_ON = True # по умолчанию алгоритм работать не будет. Как из GUI придет сигнал о начале работы, он начнет работу (True)
 DET_STATUS_SUB_TOPIC = "/gui"
+
 
 def reset_fields():
 	global img_callback_count
@@ -41,7 +44,6 @@ def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
 	if not IS_ON:
 		return
 	img_bgr = cv_bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-	# img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 	img_rgb = img_bgr
 	img_rgb = cv2.resize(img_rgb, (WIDTH, HEIGHT))
 
