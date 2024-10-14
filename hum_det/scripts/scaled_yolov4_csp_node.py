@@ -15,43 +15,40 @@ from hum_det.msg import DetectionStatus
 # питоновские файлы можно не перекомпилировать
 
 NODE_NAME = "scaled_yolov4_csp_node"
-IS_ON = True # по умолчанию алгоритм работать не будет. Как из GUI придет сигнал о начале работы, он начнет работу (True)
+is_on = True # по умолчанию алгоритм работать не будет. Как из GUI придет сигнал о начале работы, он начнет работу (True)
 # если запускать на Инженере (иначе - закомментить)
 # IMG_SUB_TOPIC = "/stereo/left/image_raw"
 # если запускать на своем ноутбуке (иначе - закомментить)
-# IMG_SUB_TOPIC = "/rtsp_camera/image_rect_color"
-# и
-IMG_SUB_TOPIC = "/usb_cam/image_raw"
+IMG_SUB_TOPIC = "/usb_cam_node/image_raw"
 TRAIN_HEIGHT = 640
 TRAIN_WIDTH = 640
 HEIGHT = 480
 WIDTH = 744
 WINDOW_ORIG = "original"
-WINDOW_SCALED_YOLOV4_CSP = "scaled-yolov4-csp"
 FREQ = 30
 img_callback_count = 0
 IMG_PUB_TOPIC = "/detected/stereo/left/image_raw"
-DET_STATUS_SUB_TOPIC = "/gui"
+DET_STATUS_SUB_TOPIC = "/gui_node/det_status"
 
 CONFIDENCE_THRESHOLD = 0.5
 IOU_THRESHOLD = 0.5
 
 # если запускать на Инженере (иначе - закомментить)
-# config_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/cfg/usar_engineer3_scaled-yolov4-csp.cfg"
-# weights_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/weights/usar_engineer3_scaled-yolov4-csp_best_1836.weights"
+# CONFIG_PATH = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/cfg/usar_engineer3_scaled-yolov4-csp.cfg"
+# WEIGHTS_PATH = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/weights/usar_engineer3_scaled-yolov4-csp_best_1836.weights"
 # если запускать на своем ноутбуке (иначе - закомментить)
-config_path = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/cfg/usar_engineer3_scaled-yolov4-csp.cfg"
-weights_path = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/weights/usar_engineer3_scaled-yolov4-csp_best_1836.weights"
+CONFIG_PATH = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/cfg/usar_engineer3_scaled-yolov4-csp.cfg"
+WEIGHTS_PATH = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/weights/usar_engineer3_scaled-yolov4-csp_best_1836.weights"
 
-font_scale = 1
-thickness = 2
+FONT_SCALE = 1
+THICKNESS = 2
 # если запускать на Инженере (иначе - закомментить)
 # labels = open("/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/data/usar_engineer3.names").read().strip().split("\n")
 # если запускать на своем ноутбуке (иначе - закомментить)
 labels = open("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_it0-3000_scaled-yolov4-csp/data/usar_engineer3.names").read().strip().split("\n")
 colors = np.array([[0, 0, 255], [203, 192, 255], [0, 102, 255], [0, 255, 255]], dtype="uint8")
 
-net = cv2.dnn.readNetFromDarknet(config_path, weights_path)
+net = cv2.dnn.readNetFromDarknet(CONFIG_PATH, WEIGHTS_PATH)
 
 ln = net.getLayerNames()
 ln = [ln[int(i - 1)] for i in net.getUnconnectedOutLayers()]
@@ -91,19 +88,19 @@ def run_img_publisher(img_publisher, img_rgb, cv_bridge):
 
 # получаем статус режима "human_detection" в gui и переключаем
 def det_status_callback(msg):
-	global IS_ON
+	global is_on
 
-	if IS_ON != msg.is_on:
-		IS_ON = msg.is_on
-		if IS_ON:
+	if is_on != msg.is_on:
+		is_on = msg.is_on
+		if is_on:
 			reset_fields()
 
 
 def img_callback(msg: Image, cv_bridge: CvBridge, img_publisher: rospy.Publisher) -> None:
-	global IS_ON
+	global is_on
 	global img_callback_count
 
-	if not IS_ON:
+	if not is_on:
 		return
 	# иначе будет серое байеризованное
 	img_bgr = cv_bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
@@ -167,10 +164,10 @@ def img_callback(msg: Image, cv_bridge: CvBridge, img_publisher: rospy.Publisher
 				w, h = boxes[i][2], boxes[i][3]
 				# draw a bounding box rectangle and label on the image
 				color = [int(c) for c in colors[class_ids[i]]]
-				cv2.rectangle(img_rgb, (x, y), (x + w, y + h), color=color, thickness=thickness)
+				cv2.rectangle(img_rgb, (x, y), (x + w, y + h), color=color, thickness=THICKNESS)
 				text = f"{labels[class_ids[i]]}: {confidences[i]:.2f}"
 				# calculate text width & height to draw the transparent boxes as background of the text
-				(text_width, text_height) = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, thickness=thickness)[0]
+				(text_width, text_height) = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, fontScale=FONT_SCALE, thickness=THICKNESS)[0]
 				text_offset_x = x
 				text_offset_y = y - 5
 				box_coords = ((text_offset_x, text_offset_y), (text_offset_x + text_width + 2, text_offset_y - text_height))
@@ -180,12 +177,12 @@ def img_callback(msg: Image, cv_bridge: CvBridge, img_publisher: rospy.Publisher
 				img_rgb = cv2.addWeighted(overlay, 0.6, img_rgb, 0.4, 0)
 				# now put the text (label: confidence %)
 				cv2.putText(img_rgb, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX,
-					fontScale=font_scale, color=(0, 0, 0), thickness=thickness)
+					fontScale=FONT_SCALE, color=(0, 0, 0), thickness=THICKNESS)
 		img_rgb = cv2.resize(img_rgb, (WIDTH, HEIGHT))
 		# отправить для показа в GUI
 		run_img_publisher(img_publisher, img_rgb, cv_bridge)
 		# просто для показа
-		cv2.imshow(WINDOW_SCALED_YOLOV4_CSP, img_rgb)
+		cv2.imshow(NODE_NAME, img_rgb)
 		cv2.waitKey(1)
 	img_callback_count += 1
 	if img_callback_count == FREQ:
@@ -196,7 +193,7 @@ def img_callback(msg: Image, cv_bridge: CvBridge, img_publisher: rospy.Publisher
 
 def main() -> None:
 	rospy.init_node(NODE_NAME)
-	sample: Image = rospy.wait_for_message(IMG_SUB_TOPIC, Image, timeout = 3.0)
+	sample: Image = rospy.wait_for_message(IMG_SUB_TOPIC, Image, timeout=3.0)
 	if sample is not None:
 		rospy.loginfo(f"Encoding: {sample.encoding}, Resolution: {sample.width, sample.height}")
 	cv_bridge: CvBridge = CvBridge()
@@ -212,4 +209,3 @@ def main() -> None:
 
 if __name__ == '__main__':
 	main()
-

@@ -5,39 +5,64 @@ import rospy
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from ultralytics import YOLO
+import time
 
-ROS_NODE_NAME = "yolov8s_node"
-ROS_IMAGE_TOPIC = "/newstereo/left/image_raw"
-# ROS_IMAGE_TOPIC = "/stereo/left/image_raw"
-# ROS_IMAGE_TOPIC = "/pylon_camera_node/image_raw"
-# ROS_IMAGE_TOPIC = "/usb_cam/image_raw"
-# ROS_IMAGE_TOPIC = "/center/image_raw"
+NODE_NAME = "yolov8s_node"
+IMG_SUB_TOPIC = "/usb_cam_node/image_raw"
+TRAIN_HEIGHT = 640
+TRAIN_WIDTH = 640
 HEIGHT = 480
 WIDTH = 744
 WINDOW_ORIG = "original"
-WINDOW_YOLOV8 = "yolov8s"
 FREQ = 1
+img_callback_count = 0
 
-count = 0
+time_took_sum = 0
+time_took_count = 0
 
-def image_callback(msg: Image, cv_bridge: CvBridge, model) -> None:
-	global count
-	img_bgr = cv_bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
-	img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-	img_rgb = cv2.resize(img_rgb, (WIDTH, HEIGHT))
 
-	if count % FREQ == 0:
-		preds = model.predict(img_rgb)
-		cv2.imshow(WINDOW_YOLOV8, preds[0].plot())
+# на основе N итераций посчитать, сколько времени в среднем занимает вывод нейросети за одну итерацию
+def print_time_took_mean_sum(time_took):
+	global time_took_sum
+	global time_took_count
+
+	time_took_sum += time_took
+	time_took_count += 1
+	if time_took_count == 10: # N == 10
+		print("time_took_mean_sum:", time_took_sum / time_took_count)
+		time_took_sum = 0
+		time_took_count = 0
+
+
+def img_callback(msg: Image, cv_bridge: CvBridge, model) -> None:
+	global img_callback_count
+
+	# иначе будет серое байеризованное
+	img_bgr = cv_bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+	# иначе будет bgr (если запускать на Инженере (иначе - закомментить)). И намного хуже будет распознавать нейронка
+	# img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+	# если запускать на своем ноутбуке (иначе - закомментить)
+	img_rgb = img_bgr
+	img_rgb = cv2.resize(img_rgb, (TRAIN_WIDTH, TRAIN_HEIGHT))
+
+	if img_callback_count == 0:
+		start = time.perf_counter()
+		result = model.predict(img_rgb)
+		time_took = time.perf_counter() - start
+		print("time_took:", time_took)
+		print_time_took_mean_sum(time_took)
+		# просто для показа
+		cv2.imshow(NODE_NAME, cv2.resize(result[0].plot(), (WIDTH, HEIGHT)))
+		# cv2.imshow(NODE_NAME, result[0].plot())
 		cv2.waitKey(1)
-	count += 1
-	if count == FREQ:
-		count = 0
+	img_callback_count += 1
+	if img_callback_count == FREQ:
+		img_callback_count = 0
 
 
 def main() -> None:
-	rospy.init_node(ROS_NODE_NAME)
-	sample: Image = rospy.wait_for_message(ROS_IMAGE_TOPIC, Image, timeout = 3.0)
+	rospy.init_node(NODE_NAME)
+	sample: Image = rospy.wait_for_message(IMG_SUB_TOPIC, Image, timeout=3.0)
 	if sample is not None:
 		rospy.loginfo(f"Encoding: {sample.encoding}, Resolution: {sample.width, sample.height}")
 	cv_bridge: CvBridge = CvBridge()
@@ -50,7 +75,7 @@ def main() -> None:
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_ep0-20_yolov8x/best.pt") # bad + speed bad
 	# print(model.info())
 
-	rospy.Subscriber(ROS_IMAGE_TOPIC, Image, lambda msg: image_callback(msg, cv_bridge, model), queue_size=None)
+	rospy.Subscriber(IMG_SUB_TOPIC, Image, lambda msg: img_callback(msg, cv_bridge, model), queue_size=None)
 
 	rospy.spin()
 
