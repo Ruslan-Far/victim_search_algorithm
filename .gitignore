@@ -1,2 +1,4 @@
+/.vscode
 /CMakeLists.txt
 /yolov9_ros
+/YOLOv10-OpenVINO-CPP-Inference

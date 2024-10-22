@@ -14,11 +14,11 @@ from hum_det.msg import DetectionStatus
 NODE_NAME = "yolov3_node"
 IS_ON = True # по умолчанию алгоритм работать не будет. Как из GUI придет сигнал о начале работы, он начнет работу (True)
 # если запускать на Инженере (иначе - закомментить)
-IMG_SUB_TOPIC = "/stereo/left/image_raw"
+# IMG_SUB_TOPIC = "/stereo/left/image_raw"
 # если запускать на своем ноутбуке (иначе - закомментить)
 # IMG_SUB_TOPIC = "/rtsp_camera/image_rect_color"
 # и
-# IMG_SUB_TOPIC = "/usb_cam/image_raw"
+IMG_SUB_TOPIC = "/usb_cam_node/image_raw"
 TRAIN_HEIGHT = 608
 TRAIN_WIDTH = 608
 HEIGHT = 480
@@ -34,18 +34,18 @@ CONFIDENCE_THRESHOLD = 0.5
 IOU_THRESHOLD = 0.5
 
 # если запускать на Инженере (иначе - закомментить)
-config_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/cfg/usar_engineer3_yolov3.cfg"
-weights_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/very_very_good_weights/usar_engineer3_yolov3_best_2018.weights"
+# config_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/cfg/usar_engineer3_yolov3.cfg"
+# weights_path = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/very_very_good_weights/usar_engineer3_yolov3_best_2018.weights"
 # если запускать на своем ноутбуке (иначе - закомментить)
-# config_path = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/cfg/usar_engineer3_yolov3.cfg"
-# weights_path = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/very_very_good_weights/usar_engineer3_yolov3_best_2018.weights"
+config_path = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/cfg/usar_engineer3_yolov3.cfg"
+weights_path = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/very_very_good_weights/usar_engineer3_yolov3_best_2018.weights"
 
 font_scale = 1
 thickness = 2
 # если запускать на Инженере (иначе - закомментить)
-labels = open("/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/data/usar_engineer3.names").read().strip().split("\n")
+# labels = open("/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/data/usar_engineer3.names").read().strip().split("\n")
 # если запускать на своем ноутбуке (иначе - закомментить)
-# labels = open("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/data/usar_engineer3.names").read().strip().split("\n")
+labels = open("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_yolov3/data/usar_engineer3.names").read().strip().split("\n")
 colors = np.array([[0, 0, 255], [203, 192, 255], [0, 102, 255], [0, 255, 255]], dtype="uint8")
 
 net = cv2.dnn.readNetFromDarknet(config_path, weights_path)
@@ -105,9 +105,9 @@ def img_callback(msg: Image, cv_bridge: CvBridge, img_publisher: rospy.Publisher
 	# иначе будет серое байеризованное
 	img_bgr = cv_bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 	# иначе будет bgr (если запускать на Инженере (иначе - закомментить)). И намного хуже будет распознавать нейронка
-	img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+	# img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 	# если запускать на своем ноутбуке (иначе - закомментить)
-	# img_rgb = img_bgr
+	img_rgb = img_bgr
 	# ОБЯЗАТЕЛЬНО НАДО ДЕЛАТЬ ВМЕСТЕ С cv2.dnn.blobFromImage
 	img_rgb = cv2.resize(img_rgb, (TRAIN_WIDTH, TRAIN_HEIGHT))
 
@@ -120,11 +120,14 @@ def img_callback(msg: Image, cv_bridge: CvBridge, img_publisher: rospy.Publisher
 		print("time_took:", time_took)
 		print_time_took_mean_sum(time_took)
 		boxes, confidences, class_ids = [], [], []
-
+		# output_count = 0
+		# detection_count = 0
 		# loop over each of the layer outputs
 		for output in layer_outputs:
+			# output_count += 1
 			# loop over each of the object detections
 			for detection in output:
+				# detection_count += 1
 				# extract the class id (label) and confidence (as a probability) of
 				# the current object detection
 				scores = detection[5:]
@@ -184,6 +187,8 @@ def img_callback(msg: Image, cv_bridge: CvBridge, img_publisher: rospy.Publisher
 		# просто для показа
 		cv2.imshow(WINDOW_YOLOV3, img_rgb)
 		cv2.waitKey(1)
+		# print("output_count", output_count)
+		# print("detection_count", detection_count)
 	img_callback_count += 1
 	if img_callback_count == FREQ:
 		img_callback_count = 0

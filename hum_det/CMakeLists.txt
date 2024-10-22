@@ -4,6 +4,12 @@ project(hum_det)
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
+set(CMAKE_CXX_STANDARD 14)
+set(SOURCES
+	utils.cc
+	inference.cc
+)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -20,6 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenCV REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -119,13 +126,13 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
-  ${catkin_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} /opt/intel/openvino/runtime/include
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/hum_det.cpp
-# )
+add_library(inference_lib
+  ${SOURCES}
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -135,7 +142,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/hum_det_node.cpp)
+add_executable(yolov10_node src/yolov10_node.cc)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -148,9 +155,11 @@ include_directories(
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(inference_lib ${OpenCV_LIBS} /opt/intel/openvino/runtime/lib/intel64/libopenvino.so yaml-cpp)
+target_link_libraries(yolov10_node
+  inference_lib
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##

@@ -47,7 +47,7 @@ def img_callback(msg: Image, cv_bridge: CvBridge, model) -> None:
 
 	if img_callback_count == 0:
 		start = time.perf_counter()
-		result = model.predict(img_rgb)
+		result = model.predict(img_rgb) # потом проверить с conf_tresh=0.5
 		time_took = time.perf_counter() - start
 		print("time_took:", time_took)
 		print_time_took_mean_sum(time_took)
