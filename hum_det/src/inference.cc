@@ -2,12 +2,14 @@
 
 #include <memory>
 
+
 namespace yolo {
 Inference::Inference(const std::string &model_path, const float &model_confidence_threshold) {
 	model_input_shape_ = cv::Size(640, 640); // Set the default size for models with dynamic shapes to prevent errors.
 	model_confidence_threshold_ = model_confidence_threshold;
 	InitialModel(model_path);
 }
+
 
 // If the model has dynamic shapes, we need to set the input shape.
 Inference::Inference(const std::string &model_path, const cv::Size model_input_shape, const float &model_confidence_threshold) {
@@ -16,6 +18,7 @@ Inference::Inference(const std::string &model_path, const cv::Size model_input_s
 
 	InitialModel(model_path);
 }
+
 
 void Inference::InitialModel(const std::string &model_path) {
 	ov::Core core;
@@ -33,7 +36,8 @@ void Inference::InitialModel(const std::string &model_path) {
   ppp.output().tensor().set_element_type(ov::element::f32);
 
   model = ppp.build();
-	compiled_model_ = core.compile_model(model, "AUTO");
+	// compiled_model_ = core.compile_model(model, "AUTO");
+	compiled_model_ = core.compile_model(model, "CPU");
 	inference_request_ = compiled_model_.create_infer_request();
 
 	short width, height;
@@ -53,6 +57,7 @@ void Inference::InitialModel(const std::string &model_path) {
 	model_output_shape_ = cv::Size(width, height);
 }
 
+
 std::vector<Detection> Inference::RunInference(const cv::Mat &frame) {
 	Preprocessing(frame);
 	inference_request_.infer();
@@ -60,6 +65,7 @@ std::vector<Detection> Inference::RunInference(const cv::Mat &frame) {
 
 	return detections_;
 }
+
 
 void Inference::Preprocessing(const cv::Mat &frame) {
 	cv::Mat resized_frame;
@@ -72,6 +78,7 @@ void Inference::Preprocessing(const cv::Mat &frame) {
 	const ov::Tensor input_tensor = ov::Tensor(compiled_model_.input().get_element_type(), compiled_model_.input().get_shape(), input_data);
 	inference_request_.set_input_tensor(input_tensor);
 }
+
 
 void Inference::PostProcessing() {
 	const float *detections = inference_request_.get_output_tensor().data<const float>();
@@ -103,6 +110,7 @@ void Inference::PostProcessing() {
 		}
 	}
 }
+
 
 cv::Rect Inference::GetBoundingBox(const cv::Rect &src) const {
 	cv::Rect box = src;

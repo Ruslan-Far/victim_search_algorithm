@@ -6,8 +6,8 @@ project(hum_det)
 
 set(CMAKE_CXX_STANDARD 14)
 set(SOURCES
-	utils.cc
-	inference.cc
+	src/utils.cc
+	src/inference.cc
 )
 
 ## Find catkin macros and libraries

@@ -1,14 +1,11 @@
 #ifndef YOLO_INFERENCE_H_
-#define YOLO_INFERENCE_H_
+# define YOLO_INFERENCE_H_
 
-#include <string>
-#include <vector>
+# include <string>
+# include <vector>
 
-// #include "ros/ros.h"
-// #include "sensor_msgs/Image.h"
-
-#include <opencv2/imgproc.hpp>
-#include <openvino/openvino.hpp>
+# include <opencv2/imgproc.hpp>
+# include <openvino/openvino.hpp>
 
 namespace yolo {
 
@@ -26,16 +23,7 @@ class Inference {
 
 	std::vector<Detection> RunInference(const cv::Mat &frame);
 
-	// const std::string NODE_NAME = "yolov10_node";
-	// const std::string IMG_SUB_TOPIC = "/usb_cam_node/image_raw";
-	// const std::string IMG_PUB_TOPIC = "/detected/stereo/left/image_raw";
-	// const std::string DET_STATUS_SUB_TOPIC = "/gui_node/det_status";
-
  private:
-	// ros::NodeHandle node;
-	// ros::Publisher img_publisher;
-	// ros::Subscriber img_subscriber;
-	// ros::Subscriber det_status_subscriber;
 
 	void InitialModel(const std::string &model_path);
 	void Preprocessing(const cv::Mat &frame);
@@ -53,6 +41,6 @@ class Inference {
 
 	float model_confidence_threshold_;
 };
-} // namespace yolo
+}
 
-#endif // YOLO_INFERENCE_H_
+#endif
