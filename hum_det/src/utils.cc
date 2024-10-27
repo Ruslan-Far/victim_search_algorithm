@@ -2,12 +2,13 @@
 
 #include <fstream>
 #include <yaml-cpp/yaml.h>
+#include <cmath>
 
 
 void DrawDetectedObject(cv::Mat &frame, const std::vector<yolo::Detection> &detections, const std::vector<std::string> &class_names) {	
 	for (const auto &detection : detections) {
 		const cv::Rect &box = detection.box;
-		const float &confidence = detection.confidence;
+		const float &confidence = round(detection.confidence * 100.0) / 100.0;
 		const int &class_id = detection.class_id;
 		
 		cv::rectangle(frame, box, COLORS[class_id], 3);
@@ -18,7 +19,7 @@ void DrawDetectedObject(cv::Mat &frame, const std::vector<yolo::Detection> &dete
 			class_string = "id[" + std::to_string(class_id) + "] " + std::to_string(confidence).substr(0, 4);
 		else
 			class_string = class_names[class_id] + " " + std::to_string(confidence).substr(0, 4);
-		
+
 		const cv::Size text_size = cv::getTextSize(class_string, cv::FONT_HERSHEY_SIMPLEX, 0.6, 2, 0);
 		const cv::Rect text_box(box.x - 2, box.y - 27, text_size.width + 10, text_size.height + 15);
 		

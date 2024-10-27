@@ -172,7 +172,7 @@ target_link_libraries(yolov10_node
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   scripts/yolov3_node.py
-  scripts/yolov8s_node.py
+  scripts/yolov8_10_node.py
   scripts/do_color_node.py
   scripts/srv_server_yolov3_node.py
   scripts/srv_client_gui_node.py

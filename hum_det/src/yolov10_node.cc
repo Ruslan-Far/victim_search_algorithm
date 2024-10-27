@@ -68,14 +68,14 @@ void img_callback(const sensor_msgs::Image::ConstPtr& msg) {
 
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, NODE_NAME);
+	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle node;
 
 	img_publisher = node.advertise<sensor_msgs::Image>(IMG_PUB_TOPIC, 1);
 	img_subscriber = node.subscribe(IMG_SUB_TOPIC, 1, img_callback);
 	det_status_subscriber = node.subscribe(DET_STATUS_SUB_TOPIC, 1, det_status_callback);
 	
-  	const std::size_t POS = MODEL_PATH.find_last_of("/");
+	const std::size_t POS = MODEL_PATH.find_last_of("/");
 	std::string metadata_path = MODEL_PATH.substr(0, POS + 1) + "metadata.yaml";
 	class_names = GetClassNameFromMetadata(metadata_path);
 
@@ -86,3 +86,42 @@ int main(int argc, char **argv) {
 
 	return 0;
 }
+
+
+
+
+
+
+
+
+
+// // необходимо для одного вывода прочитанного изображения
+// void process_img(cv::Mat& img_rgb) {
+// 	auto start_time = std::chrono::high_resolution_clock::now();
+// 	std::vector<yolo::Detection> detections = (*inference).RunInference(img_rgb);
+// 	auto end_time = std::chrono::high_resolution_clock::now();
+// 	std::chrono::duration<double> time_took = end_time - start_time;
+// 	ROS_INFO("time_took: %f", time_took.count());
+// 	DrawDetectedObject(img_rgb, detections, class_names);
+// 	// просто для показа
+// 	cv::imshow(NODE_NAME, img_rgb);
+// 	cv::waitKey(0);
+// }
+
+
+// // просто прочесть одно изображение и вывести на экран уже обработанное изображение
+// int main(int argc, char **argv) {
+// 	const std::size_t POS = MODEL_PATH.find_last_of("/");
+// 	std::string metadata_path = MODEL_PATH.substr(0, POS + 1) + "metadata.yaml";
+// 	class_names = GetClassNameFromMetadata(metadata_path);
+	
+// 	inference = new yolo::Inference(MODEL_PATH, CONFIDENCE_THRESHOLD);
+
+// 	std::string img_path = argv[1];
+// 	cv::Mat img_rgb = cv::imread(img_path);
+// 	process_img(img_rgb);
+
+// 	cv::destroyAllWindows();
+
+// 	return 0;
+// }

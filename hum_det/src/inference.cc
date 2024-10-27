@@ -86,7 +86,7 @@ void Inference::PostProcessing() {
 
 	/*
 	* 0  1  2  3      4          5
-	* x, y, w. h, confidence, class_id
+	* x, y, w, h, confidence, class_id
 	*/
 
 	for (unsigned int i = 0; i < model_output_shape_.height; ++i) {
@@ -123,4 +123,4 @@ cv::Rect Inference::GetBoundingBox(const cv::Rect &src) const {
 	
 	return box;
 }
-} // namespace yolo
+}

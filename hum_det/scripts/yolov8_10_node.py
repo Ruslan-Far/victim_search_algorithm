@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import cv2
 import rospy
@@ -7,7 +7,7 @@ from cv_bridge import CvBridge
 from ultralytics import YOLO
 import time
 
-NODE_NAME = "yolov8s_node"
+NODE_NAME = "yolov8_10_node"
 IMG_SUB_TOPIC = "/usb_cam_node/image_raw"
 TRAIN_HEIGHT = 640
 TRAIN_WIDTH = 640
@@ -28,7 +28,7 @@ def print_time_took_mean_sum(time_took):
 
 	time_took_sum += time_took
 	time_took_count += 1
-	if time_took_count == 10: # N == 10
+	if time_took_count == 100: # N == 100
 		print("time_took_mean_sum:", time_took_sum / time_took_count)
 		time_took_sum = 0
 		time_took_count = 0
@@ -47,7 +47,7 @@ def img_callback(msg: Image, cv_bridge: CvBridge, model) -> None:
 
 	if img_callback_count == 0:
 		start = time.perf_counter()
-		result = model.predict(img_rgb) # потом проверить с conf_tresh=0.5
+		result = model.predict(img_rgb, conf=0.5, device="cpu")
 		time_took = time.perf_counter() - start
 		print("time_took:", time_took)
 		print_time_took_mean_sum(time_took)
@@ -70,9 +70,16 @@ def main() -> None:
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_ep20-60_yolov8s/best.pt") # bad
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer_ep0-20_yolov8s/best.pt")
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer2_ep0-20_yolov8s/best.pt") # bad
-	model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_ep0-20_yolov8s/best.pt")
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_ep0-20_yolov8s/best.pt")
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_ep0-20_yolov8s/best_openvino_model") # не работает
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/yolov8s.pt")
+	model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/yolov8s_openvino_model") # не работает
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_ep0-20_yolov8x/best.pt") # bad + speed bad
+
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/yolov10s.pt")
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_ep0-20_yolov10s/best_openvino_model")
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/yolov10s_openvino_model")
+
 	# print(model.info())
 
 	rospy.Subscriber(IMG_SUB_TOPIC, Image, lambda msg: img_callback(msg, cv_bridge, model), queue_size=None)
