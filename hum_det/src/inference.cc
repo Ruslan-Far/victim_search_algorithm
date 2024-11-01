@@ -30,27 +30,31 @@ void Inference::InitialModel(const std::string &model_path) {
 
 	ov::preprocess::PrePostProcessor ppp = ov::preprocess::PrePostProcessor(model);
 
-  ppp.input().tensor().set_element_type(ov::element::u8).set_layout("NHWC").set_color_format(ov::preprocess::ColorFormat::BGR);
-  ppp.input().preprocess().convert_element_type(ov::element::f32).convert_color(ov::preprocess::ColorFormat::RGB).scale({ 255, 255, 255 });
+	// для RGB разные (как сейчас). Для BGR нужны одинаковые. Это все нужно для лучшего результата
+	ppp.input().tensor().set_element_type(ov::element::u8).set_layout("NHWC").set_color_format(ov::preprocess::ColorFormat::BGR);
+//   ppp.input().tensor().set_element_type(ov::element::u8).set_layout("NHWC").set_color_format(ov::preprocess::ColorFormat::RGB);
+	ppp.input().preprocess().convert_element_type(ov::element::f32).convert_color(ov::preprocess::ColorFormat::RGB).scale({ 255, 255, 255 });
+//   ppp.input().preprocess().convert_element_type(ov::element::f32).convert_color(ov::preprocess::ColorFormat::BGR).scale({ 255, 255, 255 });
 	ppp.input().model().set_layout("NCHW");
-  ppp.output().tensor().set_element_type(ov::element::f32);
+	ppp.output().tensor().set_element_type(ov::element::f32);
 
-  model = ppp.build();
+	model = ppp.build();
 	// compiled_model_ = core.compile_model(model, "AUTO");
 	compiled_model_ = core.compile_model(model, "CPU");
+	// compiled_model_ = core.compile_model(model, "GPU");
 	inference_request_ = compiled_model_.create_infer_request();
 
 	short width, height;
 
-  const std::vector<ov::Output<ov::Node>> inputs = model->inputs();
-  const ov::Shape input_shape = inputs[0].get_shape();
+	const std::vector<ov::Output<ov::Node>> inputs = model->inputs();
+	const ov::Shape input_shape = inputs[0].get_shape();
 
 	height = input_shape[1];
 	width = input_shape[2];
 	model_input_shape_ = cv::Size2f(width, height);
 
-  const std::vector<ov::Output<ov::Node>> outputs = model->outputs();
-  const ov::Shape output_shape = outputs[0].get_shape();
+	const std::vector<ov::Output<ov::Node>> outputs = model->outputs();
+	const ov::Shape output_shape = outputs[0].get_shape();
 
 	height = output_shape[1];
 	width = output_shape[2];
