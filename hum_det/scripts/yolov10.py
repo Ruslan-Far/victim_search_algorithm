@@ -28,14 +28,17 @@ def main() -> None:
 
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_ep0-20_yolov10s/best.pt")
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_ep0-20_yolov10s/best_openvino_model") # необходимо активировать OpenVINO в терминале: source /opt/intel/openvino/setupvars.sh
-	model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/yolov10s_openvino_model")
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/yolov10s_openvino_model")
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer6_ep0-20_yolov10s/best.pt")
+	model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/yolov10s.pt")
 	# print("model.info()")
 	# print(model.info())
 
-	img_path = "/home/ruslan/kpfu/magistracy/test_images/face.jpg"
+	# img_path = "/home/ruslan/kpfu/magistracy/test_images/face.jpg"
 	# img_path = "/home/ruslan/kpfu/magistracy/test_images/room1412_1_frame0028.jpg"
 	# img_path = "/home/ruslan/kpfu/magistracy/test_images/sdv1_45.JPG"
 	# img_path = "/home/ruslan/kpfu/magistracy/test_images/sdv1_124.JPG"
+	img_path = "/home/ruslan/kpfu/magistracy/test_images/bus.jpg"
 	img_rgb = cv2.imread(img_path)
 	process_img(img_rgb, model)
 

@@ -70,14 +70,16 @@ def main() -> None:
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_ep20-60_yolov8s/best.pt") # bad
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer_ep0-20_yolov8s/best.pt")
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer2_ep0-20_yolov8s/best.pt") # bad
-	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_ep0-20_yolov8s/best.pt")
+	model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_ep0-20_yolov8s/best.pt")
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_ep0-20_yolov8s/best_openvino_model") # не работает
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/yolov8s.pt")
-	model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/yolov8s_openvino_model") # не работает
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/yolov8s_openvino_model") # не работает
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_ep0-20_yolov8x/best.pt") # bad + speed bad
 
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/yolov10s.pt")
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_ep0-20_yolov10s/best_openvino_model")
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_ep0-20_yolov10s/best.pt")
+	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/usar_engineer6_ep0-20_yolov10s/best.pt")
 	# model = YOLO("/home/ruslan/kpfu/magistracy/ml_models/yolov10s_openvino_model")
 
 	# print(model.info())
