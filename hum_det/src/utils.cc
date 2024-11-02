@@ -21,10 +21,45 @@ void DrawDetectedObject(cv::Mat &frame, const std::vector<yolo::Detection> &dete
 			class_string = class_names[class_id] + " " + std::to_string(confidence).substr(0, 4);
 
 		const cv::Size text_size = cv::getTextSize(class_string, cv::FONT_HERSHEY_SIMPLEX, 0.6, 2, 0);
-		const cv::Rect text_box(box.x - 2, box.y - 27, text_size.width + 10, text_size.height + 15);
-		
+
+		int text_box_x = box.x - 2;
+		int text_box_y = box.y - 27;
+		int text_box_width = text_size.width + 10;
+		int text_box_height = text_size.height + 15;
+
+		if (text_box_x < 0)
+			text_box_x -= text_box_x;
+		else if (text_box_x + text_box_width > frame.cols)
+			text_box_x += frame.cols - (text_box_x + text_box_width);
+		if (text_box_y < 0)
+			text_box_y -= text_box_y;
+		else if (text_box_y + text_box_height > frame.rows)
+			text_box_y += frame.rows - (text_box_y + text_box_height);
+
+		// первоначальная версия с жесткими ограничениями. Если что, то можно удалить
+		// int x = 0;
+		// int y = 0;
+		// if (box.x - 2 < 0 && box.y - 27 < 0) {
+		// 	x = box.x;
+		// 	y = box.y;
+		// }
+		// else if (box.x - 2 < 0 && box.y - 27 > 0) {
+		// 	x = box.x;
+		// 	y = box.y - 27;
+		// }
+		// else if (box.x - 2 > 0 && box.y - 27 < 0) {
+		// 	x = box.x - 2;
+		// 	y = box.y;
+		// }
+		// else {
+		// 	x = box.x - 2;
+		// 	y = box.y - 27;
+		// }
+
+		const cv::Rect text_box(text_box_x, text_box_y, text_box_width, text_box_height);
+
 		cv::rectangle(frame, text_box, COLORS[class_id], cv::FILLED);
-		cv::putText(frame, class_string, cv::Point(box.x + 5, box.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 0), 2, 0);
+		cv::putText(frame, class_string, cv::Point(text_box.x + 5, text_box.y + text_box.height - 8), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 0), 2, 0);
 	}
 }
 
