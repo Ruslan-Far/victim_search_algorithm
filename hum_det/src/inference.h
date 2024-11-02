@@ -10,15 +10,15 @@
 namespace yolo {
 
 struct Detection {
-	short class_id;
-	float confidence;
 	cv::Rect box;
+	float confidence;
+	short class_id;
 };
 
 class Inference {
  public:
 	Inference() {}
-	Inference(const std::string &model_path, const float &model_confidence_threshold);
+	Inference(const std::string &model_path, const float &model_confidence_threshold, const float &model_nms_threshold);
 	Inference(const std::string &model_path, const cv::Size model_input_shape, const float &model_confidence_threshold);
 
 	std::vector<Detection> RunInference(const cv::Mat &frame);
@@ -40,6 +40,7 @@ class Inference {
 	std::vector<Detection> detections_;
 
 	float model_confidence_threshold_;
+	float model_nms_threshold_;
 };
 }
 

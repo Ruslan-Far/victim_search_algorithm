@@ -1,12 +1,14 @@
 #include "inference.h"
 
 #include <memory>
+#include <opencv2/dnn.hpp>
 
 
 namespace yolo {
-Inference::Inference(const std::string &model_path, const float &model_confidence_threshold) {
+Inference::Inference(const std::string &model_path, const float &model_confidence_threshold, const float &model_nms_threshold) {
 	model_input_shape_ = cv::Size(640, 640); // Set the default size for models with dynamic shapes to prevent errors.
 	model_confidence_threshold_ = model_confidence_threshold;
+	model_nms_threshold_ = model_nms_threshold;
 	InitialModel(model_path);
 }
 
@@ -93,6 +95,10 @@ void Inference::PostProcessing() {
 	* x, y, w, h, confidence, class_id
 	*/
 
+	std::vector<cv::Rect> boxes;
+    std::vector<float> confidences;
+    std::vector<short> class_ids;
+
 	for (unsigned int i = 0; i < model_output_shape_.height; ++i) {
 		const unsigned int index = i * model_output_shape_.width;
 
@@ -104,15 +110,23 @@ void Inference::PostProcessing() {
 			const float &w = detections[index + 2];
 			const float &h = detections[index + 3];
 
-			Detection result;
-
-			result.class_id = static_cast<const short>(detections[index + 5]);
-			result.confidence = confidence;
-			result.box = GetBoundingBox(cv::Rect(x, y, w, h));
-
-			detections_.push_back(result);
+			boxes.push_back(GetBoundingBox(cv::Rect(x, y, w, h)));
+			confidences.push_back(confidence);
+			class_ids.push_back(static_cast<const short>(detections[index + 5]));
 		}
 	}
+	// NMS
+	std::vector<int> idxs;
+	cv::dnn::NMSBoxes(boxes, confidences, model_confidence_threshold_, model_nms_threshold_, idxs);
+	for (size_t i = 0; i < idxs.size(); i++) {
+		size_t idx = idxs[i];
+		Detection result;
+		result.box = boxes[idx];
+		result.confidence = confidences[idx];
+		result.class_id = class_ids[idx];
+		detections_.push_back(result);
+	}
+	// NMS
 }
 
 

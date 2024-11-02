@@ -44,8 +44,8 @@ void img_callback(const sensor_msgs::Image::ConstPtr& msg) {
 		return;
 	}
 
-    // cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); // laptop
-    cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8); // engineer
+    cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); // laptop
+    // cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8); // engineer
 	cv::Mat img_rgb = cv_ptr->image;
 	if (img_callback_count == 0) {
 		auto start_time = std::chrono::high_resolution_clock::now();
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 	std::string metadata_path = MODEL_PATH.substr(0, POS + 1) + "metadata.yaml";
 	class_names = GetClassNameFromMetadata(metadata_path);
 
-	inference = new yolo::Inference(MODEL_PATH, CONFIDENCE_THRESHOLD);
+	inference = new yolo::Inference(MODEL_PATH, CONFIDENCE_THRESHOLD, NMS_THRESHOLD);
 
 	ros::spin();
 	cv::destroyAllWindows();
@@ -116,15 +116,15 @@ int main(int argc, char **argv) {
 // 	std::string metadata_path = MODEL_PATH.substr(0, POS + 1) + "metadata.yaml";
 // 	class_names = GetClassNameFromMetadata(metadata_path);
 	
-// 	inference = new yolo::Inference(MODEL_PATH, CONFIDENCE_THRESHOLD);
+// 	inference = new yolo::Inference(MODEL_PATH, CONFIDENCE_THRESHOLD, NMS_THRESHOLD);
 
 // 	std::string img_path = argv[1];
 // 	cv::Mat img_rgb = cv::imread(img_path);
 // 	// cv::cvtColor(img_rgb, img_rgb, cv::COLOR_RGB2BGR); // эксперементировал
 // 	// cv::resize(img_rgb, img_rgb, cv::Size(640, 640), 0, 0, cv::INTER_AREA); // эксперементировал
 
-// 	cv::imshow(NODE_NAME, img_rgb); // engineer (иначе не будет работать)
-// 	cv::waitKey(0); // engineer (иначе не будет работать)
+// 	// cv::imshow(NODE_NAME, img_rgb); // engineer (иначе не будет работать)
+// 	// cv::waitKey(0); // engineer (иначе не будет работать)
 
 // 	process_img(img_rgb);
 
