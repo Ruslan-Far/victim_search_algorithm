@@ -1,9 +1,10 @@
 #include "yolov10_node.h"
 
 
-void reset_fields(bool is_reseted_img_callback_count) {
-	if (is_reseted_img_callback_count) {
+void reset_fields(bool will_be_reseted_img_callback_count) {
+	if (will_be_reseted_img_callback_count) {
 		img_callback_count = 0;
+		range_count = 0; // for experiments
 	}
 	time_took_sum = 0.0;
 	time_took_count = 0;
@@ -28,6 +29,13 @@ void run_img_publisher(const cv::Mat& img_rgb, cv_bridge::CvImagePtr& cv_ptr) {
 }
 
 
+// for experiments
+void run_img_orig_publisher(const cv::Mat& img_rgb, cv_bridge::CvImagePtr& cv_ptr) {
+	cv_ptr->image = img_rgb;
+	img_orig_publisher.publish(cv_ptr->toImageMsg());
+}
+
+
 // получаем статус режима "human_detection" в gui и переключаем
 void det_status_callback(const hum_det::DetectionStatus::ConstPtr& msg) {
 	if (is_on != msg->is_on) {
@@ -44,10 +52,13 @@ void img_callback(const sensor_msgs::Image::ConstPtr& msg) {
 		return;
 	}
 
-    cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); // laptop
-    // cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8); // engineer
-	cv::Mat img_rgb = cv_ptr->image;
 	if (img_callback_count == 0) {
+		cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); // laptop
+    	// cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8); // engineer
+		cv::Mat img_rgb = cv_ptr->image;
+		// for experiments
+		run_img_orig_publisher(img_rgb, cv_ptr); // не влияет на скорость
+		//
 		auto start_time = std::chrono::high_resolution_clock::now();
 		std::vector<yolo::Detection> detections = (*inference).RunInference(img_rgb);
 		auto end_time = std::chrono::high_resolution_clock::now();
@@ -58,14 +69,23 @@ void img_callback(const sensor_msgs::Image::ConstPtr& msg) {
 		// отправить для показа в GUI
 		run_img_publisher(img_rgb, cv_ptr);
 		// просто для показа
-		cv::imshow(NODE_NAME, img_rgb);
-		cv::waitKey(1);
+		// cv::imshow(NODE_NAME, img_rgb);
+		// cv::waitKey(1);
+		// for experiments
+		if (range_count == RANGE_UPPER_LIMIT - 1)
+			is_on = false;
+		else
+			range_count++;
+		//
 	}
 	img_callback_count += 1;
 	if (img_callback_count == FREQ) {
 		img_callback_count = 0;
 	}
 }
+// for experiments
+// rosbag record /detected/stereo/left/image_raw
+// rosbag record /orig/stereo/left/image_raw
 
 
 int main(int argc, char **argv) {
@@ -73,6 +93,7 @@ int main(int argc, char **argv) {
 	ros::NodeHandle node;
 
 	img_publisher = node.advertise<sensor_msgs::Image>(IMG_PUB_TOPIC, 1);
+	img_orig_publisher = node.advertise<sensor_msgs::Image>(IMG_ORIG_PUB_TOPIC, 1);
 	img_subscriber = node.subscribe(IMG_SUB_TOPIC, 1, img_callback);
 	det_status_subscriber = node.subscribe(DET_STATUS_SUB_TOPIC, 1, det_status_callback);
 	
