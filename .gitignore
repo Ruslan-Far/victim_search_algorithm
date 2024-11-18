@@ -2,3 +2,5 @@
 /CMakeLists.txt
 /yolov9_ros
 /YOLOv10-OpenVINO-CPP-Inference
+/engineer-gui-control-lib
+/test/engineer-gui-control-lib
