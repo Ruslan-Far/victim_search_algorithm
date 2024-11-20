@@ -23,15 +23,15 @@ void print_time_took_mean_sum(double time_took) {
 }
 
 
-void run_det_img_publisher(const cv::Mat& img_rgb, cv_bridge::CvImagePtr& cv_ptr) {
-	cv_ptr->image = img_rgb;
+void run_det_img_publisher(const cv::Mat& img, cv_bridge::CvImagePtr& cv_ptr) {
+	cv_ptr->image = img;
 	det_img_publisher.publish(cv_ptr->toImageMsg());
 }
 
 
 // for experiments
-void run_orig_img_publisher(const cv::Mat& img_rgb, cv_bridge::CvImagePtr& cv_ptr) {
-	cv_ptr->image = img_rgb;
+void run_orig_img_publisher(const cv::Mat& img, cv_bridge::CvImagePtr& cv_ptr) {
+	cv_ptr->image = img;
 	orig_img_publisher.publish(cv_ptr->toImageMsg());
 }
 
@@ -53,11 +53,13 @@ void camera_img_callback(const sensor_msgs::Image::ConstPtr& msg) {
 	}
 
 	if (camera_img_callback_count == 0) {
-		cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); // laptop
-    	// cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8); // engineer
+		// cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); // laptop
+    	cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8); // engineer
 		cv::Mat img_rgb = cv_ptr->image;
-		// for experiments
-		run_orig_img_publisher(img_rgb, cv_ptr); // не влияет на скорость
+		cv::Mat img_bgr; // engineer
+		// for experiments (engineer)
+		cv::cvtColor(img_rgb, img_bgr, CV_RGB2BGR);
+		run_orig_img_publisher(img_bgr, cv_ptr); // не влияет на скорость
 		//
 		auto start_time = std::chrono::high_resolution_clock::now();
 		std::vector<yolo::Detection> detections = (*inference).RunInference(img_rgb);
@@ -66,11 +68,13 @@ void camera_img_callback(const sensor_msgs::Image::ConstPtr& msg) {
 		ROS_INFO("time_took: %f", time_took.count());
 		print_time_took_mean_sum(time_took.count());
 		DrawDetectedObject(img_rgb, detections, class_names);
-		// отправить для показа в GUI
-		run_det_img_publisher(img_rgb, cv_ptr);
+		// отправить для показа в GUI (engineer)
+		cv::cvtColor(img_rgb, img_bgr, CV_RGB2BGR);
+		run_det_img_publisher(img_bgr, cv_ptr);
+		//
 		// просто для показа
-		// cv::imshow(NODE_NAME, img_rgb);
-		// cv::waitKey(1);
+		cv::imshow(NODE_NAME, img_rgb);
+		cv::waitKey(1);
 		// for experiments
 		if (range_count == RANGE_UPPER_LIMIT - 1)
 			is_on = false;
