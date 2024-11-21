@@ -88,8 +88,8 @@ void camera_img_callback(const sensor_msgs::Image::ConstPtr& msg) {
 	}
 }
 // for experiments
-// rosbag record /detected/stereo/left/image_raw
-// rosbag record /orig/stereo/left/image_raw
+// rosbag record /yolov10_node/stereo/left/det_image
+// rosbag record /yolov10_node/stereo/left/orig_image
 
 
 int main(int argc, char **argv) {

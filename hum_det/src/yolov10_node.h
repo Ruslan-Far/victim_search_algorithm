@@ -31,7 +31,7 @@ short camera_img_callback_count = 0;
 double time_took_sum = 0.0;
 short time_took_count = 0;
 short range_count = 0; // for experiments
-const short RANGE_UPPER_LIMIT = 300; // for experiments
+const short RANGE_UPPER_LIMIT = 400; // for experiments
 
 ros::Publisher det_img_publisher;
 ros::Publisher orig_img_publisher; // for experiments
