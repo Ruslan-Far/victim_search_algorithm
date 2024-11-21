@@ -13,8 +13,8 @@
 # include <opencv2/highgui.hpp>
 
 const std::string NODE_NAME = "yolov10_node";
-const std::string DET_IMG_TOPIC = "/detected/stereo/left/image_raw";
-const std::string ORIG_IMG_TOPIC = "/orig/stereo/left/image_raw"; // for experiments
+const std::string DET_IMG_TOPIC = "/" + NODE_NAME + "/stereo/left/det_image";
+const std::string ORIG_IMG_TOPIC = "/" + NODE_NAME + "/stereo/left/orig_image"; // for experiments
 // const std::string CAMERA_IMG_TOPIC = "/usb_cam_node/image_raw";
 // const std::string CAMERA_IMG_TOPIC = "/improved/usb_cam_node/image_raw";
 const std::string CAMERA_IMG_TOPIC = "/stereo/left/image_raw";
@@ -31,7 +31,7 @@ short camera_img_callback_count = 0;
 double time_took_sum = 0.0;
 short time_took_count = 0;
 short range_count = 0; // for experiments
-const short RANGE_UPPER_LIMIT = 200; // for experiments
+const short RANGE_UPPER_LIMIT = 300; // for experiments
 
 ros::Publisher det_img_publisher;
 ros::Publisher orig_img_publisher; // for experiments
