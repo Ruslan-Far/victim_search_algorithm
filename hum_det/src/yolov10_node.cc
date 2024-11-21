@@ -73,8 +73,8 @@ void camera_img_callback(const sensor_msgs::Image::ConstPtr& msg) {
 		run_det_img_publisher(img_bgr, cv_ptr);
 		//
 		// просто для показа
-		cv::imshow(NODE_NAME, img_rgb);
-		cv::waitKey(1);
+		// cv::imshow(NODE_NAME, img_rgb);
+		// cv::waitKey(1);
 		// for experiments
 		if (range_count == RANGE_UPPER_LIMIT - 1)
 			is_on = false;

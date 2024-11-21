@@ -24,9 +24,9 @@ yolo::Inference *inference;
 
 bool is_on = true;
 
-// const short FREQ = 1;
+const short FREQ = 1;
 // const short FREQ = 25; // engineer: (0.75 сек)
-const short FREQ = 5; // laptop: работает почему-то медленно (0.18 сек); engineer: (0.715 сек)
+// const short FREQ = 5; // laptop: работает почему-то медленно (0.18 сек); engineer: наоборот, быстрее (0.715 сек, 0.7 сек)
 short camera_img_callback_count = 0;
 double time_took_sum = 0.0;
 short time_took_count = 0;
