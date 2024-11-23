@@ -36,14 +36,14 @@ void run_orig_img_publisher(const cv::Mat& img, cv_bridge::CvImagePtr& cv_ptr) {
 }
 
 
-// получаем статус режима "human_detection" в gui и переключаем
-void gui_det_status_callback(const hum_det::DetectionStatus::ConstPtr& msg) {
-	if (is_on != msg->is_on) {
-		is_on = msg->is_on;
-		if (is_on) {
-			reset_fields(true);
-		}
+// переключаем режим "human_detection" во вкл/выкл состояние
+bool handle_det_mode_switch(hum_det::DetModeSwitch::Request &req, hum_det::DetModeSwitch::Response &res) {
+	is_on = req.is_on;
+	if (is_on) {
+		reset_fields(is_on);
 	}
+	res.code = 0; // операция прошла успешно
+	return true;
 }
 
 
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 	orig_img_publisher = node.advertise<sensor_msgs::Image>(ORIG_IMG_TOPIC, 1);
 	camera_img_subscriber = node.subscribe(CAMERA_IMG_TOPIC, 1, camera_img_callback); // работает с 0 и 1000 очень странно, но время работы не меняется
 	// Это работает в замедленном действии: быстро поступающие изображения все сохраняются в буфер и обрабатываются последовательно
-	gui_det_status_subscriber = node.subscribe(GUI_DET_STATUS_TOPIC, 1, gui_det_status_callback);
+	det_mode_switch_server = node.advertiseService(DET_MODE_SWITCH_SRV, handle_det_mode_switch);
 	
 	const std::size_t POS = MODEL_PATH.find_last_of("/");
 	std::string metadata_path = MODEL_PATH.substr(0, POS + 1) + "metadata.yaml";

@@ -4,7 +4,7 @@
 # include <ros/ros.h>
 # include <sensor_msgs/Image.h>
 # include <sensor_msgs/image_encodings.h>
-# include "hum_det/DetectionStatus.h"
+# include "hum_det/DetModeSwitch.h"
 # include "inference.h"
 # include "utils.h"
 # include <cv_bridge/cv_bridge.h>
@@ -18,7 +18,7 @@ const std::string ORIG_IMG_TOPIC = "/" + NODE_NAME + "/stereo/left/orig_image"; 
 // const std::string CAMERA_IMG_TOPIC = "/usb_cam_node/image_raw";
 // const std::string CAMERA_IMG_TOPIC = "/improved/usb_cam_node/image_raw";
 const std::string CAMERA_IMG_TOPIC = "/stereo/left/image_raw";
-const std::string GUI_DET_STATUS_TOPIC = "/gui_node/det_status";
+const std::string DET_MODE_SWITCH_SRV = "det_mode_switch";
 
 yolo::Inference *inference;
 
@@ -36,7 +36,7 @@ const short RANGE_UPPER_LIMIT = 400; // for experiments
 ros::Publisher det_img_publisher;
 ros::Publisher orig_img_publisher; // for experiments
 ros::Subscriber camera_img_subscriber;
-ros::Subscriber gui_det_status_subscriber;
+ros::ServiceServer det_mode_switch_server;
 
 // const std::string MODEL_PATH = "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer3_ep0-20_yolov10s/best_openvino_conv_model/best.xml";
 // const std::string MODEL_PATH = "/home/ruslan/kpfu/magistracy/ml_models/yolov10s_openvino_conv_model/yolov10s.xml";
