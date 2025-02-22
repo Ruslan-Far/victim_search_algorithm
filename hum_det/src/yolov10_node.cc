@@ -4,7 +4,7 @@
 void reset_fields(bool will_be_reseted_camera_img_callback_count) {
 	if (will_be_reseted_camera_img_callback_count) {
 		camera_img_callback_count = 0;
-		range_count = 0; // for experiments
+		// range_count = 0; // for experiments
 	}
 	time_took_sum = 0.0;
 	time_took_count = 0;
@@ -29,11 +29,11 @@ void run_det_img_publisher(const cv::Mat& img, cv_bridge::CvImagePtr& cv_ptr) {
 }
 
 
-// for experiments
-void run_orig_img_publisher(const cv::Mat& img, cv_bridge::CvImagePtr& cv_ptr) {
-	cv_ptr->image = img;
-	orig_img_publisher.publish(cv_ptr->toImageMsg());
-}
+// // for experiments
+// void run_orig_img_publisher(const cv::Mat& img, cv_bridge::CvImagePtr& cv_ptr) {
+// 	cv_ptr->image = img;
+// 	orig_img_publisher.publish(cv_ptr->toImageMsg());
+// }
 
 
 // переключаем режим "human_detection" во вкл/выкл состояние
@@ -53,13 +53,13 @@ void camera_img_callback(const sensor_msgs::Image::ConstPtr& msg) {
 	}
 
 	if (camera_img_callback_count == 0) {
-		// cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); // laptop
-    	cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8); // engineer
+		cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); // laptop
+    	// cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8); // engineer
 		cv::Mat img_rgb = cv_ptr->image;
-		cv::Mat img_bgr; // engineer
+		// cv::Mat img_bgr; // engineer
 		// for experiments (engineer)
-		cv::cvtColor(img_rgb, img_bgr, CV_RGB2BGR);
-		run_orig_img_publisher(img_bgr, cv_ptr); // не влияет на скорость
+		// cv::cvtColor(img_rgb, img_bgr, CV_RGB2BGR);
+		// run_orig_img_publisher(img_bgr, cv_ptr); // не влияет на скорость
 		//
 		auto start_time = std::chrono::high_resolution_clock::now();
 		std::vector<yolo::Detection> detections = (*inference).RunInference(img_rgb);
@@ -69,17 +69,21 @@ void camera_img_callback(const sensor_msgs::Image::ConstPtr& msg) {
 		print_time_took_mean_sum(time_took.count());
 		DrawDetectedObject(img_rgb, detections, class_names);
 		// отправить для показа в GUI (engineer)
-		cv::cvtColor(img_rgb, img_bgr, CV_RGB2BGR);
-		run_det_img_publisher(img_bgr, cv_ptr);
+		// cv::cvtColor(img_rgb, img_bgr, CV_RGB2BGR);
+		// run_det_img_publisher(img_bgr, cv_ptr);
+		//
+		// отправить для показа в GUI (laptop)
+		run_det_img_publisher(img_rgb, cv_ptr);
 		//
 		// просто для показа
 		// cv::imshow(NODE_NAME, img_rgb);
 		// cv::waitKey(1);
+		//
 		// for experiments
-		if (range_count == RANGE_UPPER_LIMIT - 1)
-			is_on = false;
-		else
-			range_count++;
+		// if (range_count == RANGE_UPPER_LIMIT - 1)
+		// 	is_on = false;
+		// else
+		// 	range_count++;
 		//
 	}
 	camera_img_callback_count += 1;
@@ -92,14 +96,13 @@ void camera_img_callback(const sensor_msgs::Image::ConstPtr& msg) {
 // rosbag record /yolov10_node/stereo/left/orig_image
 
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
 	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle node;
 
 	det_img_publisher = node.advertise<sensor_msgs::Image>(DET_IMG_TOPIC, 1); // работает с 0 и 1000 как обычно и время работы не меняется
-	orig_img_publisher = node.advertise<sensor_msgs::Image>(ORIG_IMG_TOPIC, 1);
-	camera_img_subscriber = node.subscribe(CAMERA_IMG_TOPIC, 1, camera_img_callback); // работает с 0 и 1000 очень странно, но время работы не меняется
-	// Это работает в замедленном действии: быстро поступающие изображения все сохраняются в буфер и обрабатываются последовательно
+	// orig_img_publisher = node.advertise<sensor_msgs::Image>(ORIG_IMG_TOPIC, 1);
+	camera_img_subscriber = node.subscribe(CAMERA_IMG_TOPIC, 1, camera_img_callback); // работает с 0 и 1000 очень странно, но время работы не меняется. Это работает в замедленном действии: быстро поступающие изображения все сохраняются в буфер и обрабатываются последовательно
 	det_mode_switch_server = node.advertiseService(DET_MODE_SWITCH_SRV, handle_det_mode_switch);
 	
 	const std::size_t POS = MODEL_PATH.find_last_of("/");
@@ -110,6 +113,7 @@ int main(int argc, char **argv) {
 
 	ros::spin();
 	cv::destroyAllWindows();
+	delete inference;
 
 	return 0;
 }
@@ -137,24 +141,34 @@ int main(int argc, char **argv) {
 
 
 // // просто прочесть одно изображение и вывести на экран уже обработанное изображение
-// int main(int argc, char **argv) {
+// int main(int argc, char** argv) {
 // 	const std::size_t POS = MODEL_PATH.find_last_of("/");
 // 	std::string metadata_path = MODEL_PATH.substr(0, POS + 1) + "metadata.yaml";
 // 	class_names = GetClassNameFromMetadata(metadata_path);
 	
 // 	inference = new yolo::Inference(MODEL_PATH, CONFIDENCE_THRESHOLD, NMS_THRESHOLD);
 
-// 	std::string img_path = argv[1];
+// 	// задать путь
+// 	// std::string img_path = argv[1];
+// 	std::string img_path = "/home/ruslan/kpfu/magistracy/graduate_work/paper/journal/computer_optics/images/frame0043.jpg";
+// 	// std::string img_path = "/home/ruslan/kpfu/magistracy/graduate_work/paper/test_1409/scenario_1/range_1_50-200/light/orig/s1r1_50-200_light_orig/frame0027.jpg";
+// 	// std::string img_path = "/home/ruslan/kpfu/magistracy/graduate_work/paper/test_1409/scenario_1/range_1_50-200/light/orig/s1r1_50-200_light_orig/frame0040.jpg";
+// 	// std::string img_path = "/home/ruslan/kpfu/magistracy/graduate_work/paper/test_1409/scenario_1/range_1_50-200/light/orig/s1r1_50-200_light_orig/frame0043.jpg";
+// 	//
+
 // 	cv::Mat img_rgb = cv::imread(img_path);
 // 	// cv::cvtColor(img_rgb, img_rgb, cv::COLOR_RGB2BGR); // эксперементировал
-// 	// cv::resize(img_rgb, img_rgb, cv::Size(640, 640), 0, 0, cv::INTER_AREA); // эксперементировал
+// 	// cv::resize(img_rgb, img_rgb, cv::Size(640, 640), 0, 0, cv::INTER_AREA); // экспериментировал
 
 // 	// cv::imshow(NODE_NAME, img_rgb); // engineer (иначе не будет работать)
 // 	// cv::waitKey(0); // engineer (иначе не будет работать)
 
 // 	process_img(img_rgb);
 
-// 	cv::destroyAllWindows();
+// 	// cv::imwrite("/home/ruslan/kpfu/magistracy/graduate_work/paper/journal/computer_optics/images/det_frame0043.jpg", img_rgb);
+
+	// cv::destroyAllWindows();
+	// delete inference;
 
 // 	return 0;
 // }

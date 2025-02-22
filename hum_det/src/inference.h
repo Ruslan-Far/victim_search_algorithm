@@ -20,6 +20,7 @@ class Inference {
 	Inference() {}
 	Inference(const std::string &model_path, const float &model_confidence_threshold, const float &model_nms_threshold);
 	Inference(const std::string &model_path, const cv::Size model_input_shape, const float &model_confidence_threshold);
+	~Inference() {}
 
 	std::vector<Detection> RunInference(const cv::Mat &frame);
 
