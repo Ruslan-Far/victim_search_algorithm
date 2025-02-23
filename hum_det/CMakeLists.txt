@@ -61,6 +61,9 @@ find_package(yaml-cpp REQUIRED)
 add_message_files(
   FILES
   DetectionStatus.msg
+  Box.msg
+  Det.msg
+  DetArray.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -80,6 +83,7 @@ add_service_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  sensor_msgs
 )
 
 ################################################
@@ -181,6 +185,7 @@ catkin_install_python(PROGRAMS
   scripts/yolov4_tiny_node.py
   scripts/yolo_openvino_node.py
   scripts/improve_img_node.py
+  scripts/det_img_group_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

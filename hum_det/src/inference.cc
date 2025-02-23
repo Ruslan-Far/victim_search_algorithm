@@ -80,14 +80,14 @@ void Inference::Preprocessing(const cv::Mat &frame) {
 	scale_factor_.x = static_cast<float>(frame.cols / model_input_shape_.width);
 	scale_factor_.y = static_cast<float>(frame.rows / model_input_shape_.height);
 
-	float* input_data = (float*)resized_frame.data;
+	float *input_data = (float *)resized_frame.data;
 	const ov::Tensor input_tensor = ov::Tensor(compiled_model_.input().get_element_type(), compiled_model_.input().get_shape(), input_data);
 	inference_request_.set_input_tensor(input_tensor);
 }
 
 
 void Inference::PostProcessing() {
-	const float* detections = inference_request_.get_output_tensor().data<const float>();
+	const float *detections = inference_request_.get_output_tensor().data<const float>();
 	detections_.clear();
 
 	/*
