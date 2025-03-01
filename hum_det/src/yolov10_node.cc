@@ -95,7 +95,7 @@ void goal_det_callback(const hum_det::DetArray::ConstPtr &msg) {
 		result.box.width = msg_det.bbox.w;
 		result.box.height = msg_det.bbox.h;
 		result.confidence = msg_det.confidence;
-		result.class_id = msg_det.class_id; // !!!
+		result.class_id = msg_det.class_id;
 		detections.push_back(result);
 	}
 	DrawDetectedObject(img_rgb, detections, class_names);
@@ -105,7 +105,7 @@ void goal_det_callback(const hum_det::DetArray::ConstPtr &msg) {
 	// run_det_img_publisher(img_bgr, cv_ptr);
 	//
 	// отправить для показа в GUI (laptop)
-	run_det_img_publisher(img_rgb, cv_ptr);
+	// run_det_img_publisher(img_rgb, cv_ptr);
 	//
 	cv::imshow(NODE_NAME, img_rgb);
 	cv::waitKey(1);
@@ -172,7 +172,7 @@ int main(int argc, char **argv) {
 // 	std::string metadata_path = MODEL_PATH.substr(0, POS + 1) + "metadata.yaml";
 // 	class_names = GetClassNameFromMetadata(metadata_path);
 	
-// 	inference = new yolo::Inference(MODEL_PATH, CONFIDENCE_THRESHOLD, NMS_THRESHOLD);
+// 	inference = std::make_unique<yolo::Inference>(MODEL_PATH, CONFIDENCE_THRESHOLD, NMS_THRESHOLD);
 
 // 	// задать путь
 // 	// std::string img_path = argv[1];
@@ -191,10 +191,11 @@ int main(int argc, char **argv) {
 
 // 	process_img(img_rgb);
 
-// 	// cv::imwrite("/home/ruslan/kpfu/magistracy/graduate_work/paper/journal/computer_optics/images/det_frame0043.jpg", img_rgb);
+// 	// cv::resize(img_rgb, img_rgb, cv::Size(640, 640), 0, 0, cv::INTER_AREA);
 
-	// cv::destroyAllWindows();
-	// delete inference;
+// 	// cv::imwrite("/home/ruslan/det_frame0043.jpg", img_rgb);
+
+// 	cv::destroyAllWindows();
 
 // 	return 0;
 // }
