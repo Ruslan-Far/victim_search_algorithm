@@ -13,6 +13,7 @@
 # include <chrono>
 # include <iostream>
 # include <opencv2/highgui.hpp>
+# include <unistd.h>
 
 const std::string NODE_NAME = "yolov10_node";
 

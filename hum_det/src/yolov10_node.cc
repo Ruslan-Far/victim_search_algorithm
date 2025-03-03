@@ -105,10 +105,15 @@ void goal_det_callback(const hum_det::DetArray::ConstPtr &msg) {
 	// run_det_img_publisher(img_bgr, cv_ptr);
 	//
 	// отправить для показа в GUI (laptop)
-	// run_det_img_publisher(img_rgb, cv_ptr);
+	run_det_img_publisher(img_rgb, cv_ptr);
+	ROS_INFO("before 3 seconds");
+	sleep(3);
+	ROS_INFO("after 3 seconds");
 	//
-	cv::imshow(NODE_NAME, img_rgb);
-	cv::waitKey(1);
+	// delete {
+	// cv::imshow(NODE_NAME, img_rgb);
+	// cv::waitKey(1);
+	// }
 }
 
 

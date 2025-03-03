@@ -5,6 +5,7 @@ from hum_det.msg import DetArray, Det
 from hum_det.srv import *
 from cv_bridge import CvBridge
 import cv2
+import time
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -20,19 +21,29 @@ DET_GROUP_MODE_SWITCH_SRV = "det_group_mode_switch"
 MAX_FRAMES = 10 # в будущем заменить на более маленькое число
 MIN_DETECTION_RATE = 0.7 # в будущем заменить на более маленькое число
 MIN_IOU = 0.8
-
-is_on = False
-cv_bridge = CvBridge()
-detection_history = []
+MAX_STOP_TIME = 20 # seconds
+MIN_MOVING_TIME = 5 # seconds
 
 goal_det_pub = rospy.Publisher(GOAL_DET_TOPIC, DetArray, queue_size=1)
+
+cv_bridge = CvBridge() # delete
+is_on = False
+is_on_search = False # будет нужен для search_node
+is_on_stereo_rescue = False # будет нужен для stereo_node и rescue_node
+detection_history = []
+is_min_moving = False # нужно, чтобы старые изображения (которые в пределах MIN_MOVING_TIME) не обрабатывались вообще уже во время работы search_node
+start_time = 0
 
 
 def reset_fields():
 	global detection_history
+	global is_min_moving
+	global start_time
 
 	detection_history = []
-	print("reset_fields")
+	is_min_moving = False
+	start_time = 0
+	print("reseted_fields")
 
 
 def calculate_iou(box1, box2):
@@ -101,7 +112,7 @@ def get_goal_det():
 	for hist_id, history in enumerate(detection_history):
 		# если данные еще не накопились в полном объеме
 		if len(history) != MAX_FRAMES:
-			print("если данные еще не накопились в полном объеме")
+			print("данные еще не накопились в полном объеме")
 			continue
 		# ----------------------------------------------------------------- step 1
 		print("----------------------------------------------------------------- step 1")
@@ -148,7 +159,7 @@ def get_goal_det():
 		print("max_avg_conf", max_avg_conf)
 	# если не накопилось достаточно данных или все коэффициенты обнаружений объектов классов оказались меньше необходимого порога
 	if max_class_id == -1:
-		print("если не накопилось достаточно данных или все коэффициенты обнаружений объектов классов оказались меньше необходимого порога")
+		print("не накопилось достаточно данных или все коэффициенты обнаружений объектов классов оказались меньше необходимого порога")
 		return None
 	# --------------------------------------------------------------------- step 3
 	print("----------------------------------------------------------------- step 3")
@@ -179,7 +190,7 @@ def get_goal_det():
 	return [int(x), int(y), int(w), int(h), float(max_avg_conf), int(max_class_id)]
 
 
-def run_goal_det_pub(goal_det, img_rgb):
+def run_goal_det_pub(goal_det, msg_img):
 	print("===run_goal_det_pub===")
 	msg = DetArray()
 	msg_det = Det()
@@ -192,16 +203,40 @@ def run_goal_det_pub(goal_det, img_rgb):
 	msg_det.class_id = goal_det[5]
 
 	msg.dets.append(msg_det)
-	msg.img = cv_bridge.cv2_to_imgmsg(img_rgb, "bgr8")
+	msg.img = msg_img
 	goal_det_pub.publish(msg)
 
 
 def det_array_callback(msg):
 	global is_on
+	global is_on_search
+	global is_on_stereo_rescue
 	global detection_history
+	global is_min_moving
+	global start_time
 
 	if not is_on:
 		return
+	if is_on_stereo_rescue:
+		if time.time() - start_time >= 10: # заглушка: имитация работы stereo_node и rescue_node
+			# to do: выключить stereo_node и rescue_node через сервис
+			print("2222 выключить stereo_node и rescue_node через сервис")
+			is_on_stereo_rescue = False
+			reset_fields()
+			print("after 10 seconds")
+			# to do: включить search_node через сервис
+			print("3333333333333333333 включить search_node через сервис")
+			print("3333333333333333333++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
+			is_on_search = True
+		else:
+			return
+	elif is_min_moving:
+		if time.time() - start_time >= MIN_MOVING_TIME:
+			reset_fields()
+			print("after MIN_MOVING_TIME seconds")
+		else:
+			return
+
 	# потом обязательно удалить {
 	# иначе будет серое байеризованное
 	img_bgr = cv_bridge.imgmsg_to_cv2(msg.img, desired_encoding="bgr8")
@@ -213,20 +248,52 @@ def det_array_callback(msg):
 	cv2.waitKey(1)
 	# }
 
-	# detections = msg.dets
+	if not is_on_search:
+		if time.time() - start_time >= MAX_STOP_TIME:
+			# to do: включить search_node через сервис
+			print("222222222222222 включить search_node через сервис")
+			print("222222222222222++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
+			is_on_search = True
+			is_min_moving = True
+			start_time = time.time()
+			return
+	elif len(msg.dets) != 0: # нужно как можно быстрее остановиться, когда робот кого-то увидел
+		# to do: выключить search_node через сервис
+		print("выключить search_node через сервис")
+		print("----------------------------------------STOP----------------------------------------")
+		is_on_search = False
+		start_time = time.time()
 	fit_detection_history(msg.dets)
 	goal_det = get_goal_det()
 	if goal_det is not None:
-		run_goal_det_pub(goal_det, img_rgb)
+		# to do: включить stereo_node через сервис. Данная нода включит rescue_node через сервис и отправит в топик /goal_det детекцию, изображение и расстояние до детекции
+		print("включить stereo_node и rescue_node через сервис")
+		is_on_stereo_rescue = True
+		start_time = time.time()
+		run_goal_det_pub(goal_det, msg.img)
 
 
-# переключаем режим "group_human_detection" (может в будущем переименовать) во вкл/выкл состояние
+# переключаем режим "group_human_detection" (может в будущем переименовать, например, "autonomous_mode") во вкл/выкл состояние
 def handle_det_group_mode_switch(req):
 	global is_on
+	global is_on_search
+	global is_on_stereo_rescue
 
 	is_on = req.is_on
-	if is_on:
+	if is_on: # первым делом при включении алгоритма обязательно нужно сбросить все переменные
 		reset_fields()
+		# to do: включить search_node через сервис
+		print("включить search_node через сервис")
+		print("++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
+		is_on_search = True
+	else:
+		# to do: выключить search_node через сервис
+		print("2222222222222222 выключить search_node через сервис")
+		print("2222222222222222----------------------------------------STOP----------------------------------------")
+		is_on_search = False
+		# to do: выключить stereo_node и rescue_node через сервис
+		print("выключить stereo_node и rescue_node через сервис")
+		is_on_stereo_rescue = False
 	return DetModeSwitchResponse(0) # операция прошла успешно
 
 
