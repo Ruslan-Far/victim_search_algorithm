@@ -30,7 +30,8 @@ void run_det_img_publisher(const cv::Mat &img, cv_bridge::CvImagePtr &cv_ptr) {
 }
 
 
-void run_det_array_pub(const std::vector<yolo::Detection> &detections, const cv::Mat &img, cv_bridge::CvImagePtr &cv_ptr) {
+void run_det_array_pub(const std::vector<yolo::Detection> &detections, const sensor_msgs::Image::ConstPtr &msg_img,
+																const stereo_msgs::DisparityImage::ConstPtr msg_disp_img) {
 	hum_det::DetArray msg;
 	hum_det::Det msg_det;
 
@@ -43,8 +44,17 @@ void run_det_array_pub(const std::vector<yolo::Detection> &detections, const cv:
 		msg_det.class_id = detection.class_id;
 		msg.dets.push_back(msg_det);
 	}
-	cv_ptr->image = img;
-	msg.img = *(cv_ptr->toImageMsg());
+	msg.img = *msg_img;
+	if (msg_disp_img) {
+		ROS_INFO("disparity message received!");
+		msg.disp_img = *msg_disp_img;
+	}
+	else {
+		ROS_WARN("failed to get disparity message in 1 second");
+		stereo_msgs::DisparityImage disp_img;
+		disp_img.f = -1.0;
+		msg.disp_img = disp_img;
+	}
 	det_array_pub.publish(msg);
 }
 
@@ -55,6 +65,10 @@ void camera_img_callback(const sensor_msgs::Image::ConstPtr &msg) {
 	}
 
 	if (camera_img_callback_count == 0) {
+		// получаем диспаритетное изображение (ждем 1 секунду) {
+		boost::shared_ptr<stereo_msgs::DisparityImage const> msg_disp_img;
+		msg_disp_img = ros::topic::waitForMessage<stereo_msgs::DisparityImage>(CAMERA_DISP_IMG_TOPIC, ros::Duration(1.0));
+		// }
 		cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); // laptop
     	// cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8); // engineer
 		cv::Mat img_rgb = cv_ptr->image;
@@ -64,7 +78,7 @@ void camera_img_callback(const sensor_msgs::Image::ConstPtr &msg) {
 		std::chrono::duration<double> time_took = end_time - start_time;
 		ROS_INFO("time_took: %f", time_took.count());
 		print_time_took_mean_sum(time_took.count());
-		run_det_array_pub(detections, img_rgb, cv_ptr);
+		run_det_array_pub(detections, msg, msg_disp_img);
 		DrawDetectedObject(img_rgb, detections, class_names);
 		// отправить для показа в GUI (engineer)
 		// cv::Mat img_bgr;
@@ -98,6 +112,7 @@ void goal_det_callback(const hum_det::DetArray::ConstPtr &msg) {
 		result.class_id = msg_det.class_id;
 		detections.push_back(result);
 	}
+	ROS_INFO("msg->distance = %f", msg->distance);
 	DrawDetectedObject(img_rgb, detections, class_names);
 	// отправить для показа в GUI (engineer)
 	// cv::Mat img_bgr;

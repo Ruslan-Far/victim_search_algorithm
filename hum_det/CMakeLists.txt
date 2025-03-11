@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   roslib
   rospy
   sensor_msgs
+  stereo_msgs
   std_msgs
   message_generation
 )
@@ -60,7 +61,6 @@ find_package(yaml-cpp REQUIRED)
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  DetectionStatus.msg
   Box.msg
   Det.msg
   DetArray.msg
@@ -70,6 +70,7 @@ add_message_files(
 add_service_files(
   FILES
   DetModeSwitch.srv
+  StereoMode.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -84,6 +85,7 @@ generate_messages(
   DEPENDENCIES
   std_msgs
   sensor_msgs
+  stereo_msgs
 )
 
 ################################################
@@ -175,17 +177,8 @@ target_link_libraries(yolov10_node
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  scripts/yolov3_node.py
-  scripts/yolov8_10_node.py
-  scripts/do_color_node.py
-  scripts/srv_server_yolov3_node.py
-  scripts/srv_client_gui_node.py
-  scripts/scaled_yolov4_csp_node.py
-  scripts/yolov4_node.py
-  scripts/yolov4_tiny_node.py
-  scripts/yolo_openvino_node.py
-  scripts/improve_img_node.py
   scripts/det_img_group_node.py
+  scripts/stereo_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
 import rospy
-from hum_det.msg import DetArray, Det
+from hum_det.msg import DetArray, Det, Box
 from hum_det.srv import *
 from cv_bridge import CvBridge
 import cv2
 import time
+import numpy as np
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -17,6 +18,7 @@ DET_ARRAY_TOPIC = "/det_array"
 GOAL_DET_TOPIC = "/goal_det"
 
 DET_GROUP_MODE_SWITCH_SRV = "det_group_mode_switch"
+STEREO_MODE_SRV = "stereo_mode"
 
 MAX_FRAMES = 10 # в будущем заменить на более маленькое число
 MIN_DETECTION_RATE = 0.7 # в будущем заменить на более маленькое число
@@ -26,12 +28,14 @@ MIN_MOVING_TIME = 5 # seconds
 
 goal_det_pub = rospy.Publisher(GOAL_DET_TOPIC, DetArray, queue_size=1)
 
+stereo_mode_client = rospy.ServiceProxy(STEREO_MODE_SRV, StereoMode)
+
 cv_bridge = CvBridge() # delete
 is_on = False
-is_on_search = False # будет нужен для search_node
-is_on_stereo_rescue = False # будет нужен для stereo_node и rescue_node
+is_on_search = False # будет нужен для search_mode
+is_on_rescue = False # будет нужен для rescue_mode
 detection_history = []
-is_min_moving = False # нужно, чтобы старые изображения (которые в пределах MIN_MOVING_TIME) не обрабатывались вообще уже во время работы search_node
+is_min_moving = False # нужно, чтобы старые изображения (которые в пределах MIN_MOVING_TIME) не обрабатывались вообще уже во время работы search_mode
 start_time = 0
 
 
@@ -190,42 +194,72 @@ def get_goal_det():
 	return [int(x), int(y), int(w), int(h), float(max_avg_conf), int(max_class_id)]
 
 
-def run_goal_det_pub(goal_det, msg_img):
+def start_stereo_rescue_modes(goal_det, msg_img, msg_disp_img):
+	global is_on_search
+	global is_on_rescue
+	global start_time
+
+	print("===start_stereo_rescue_modes===")
+	msg_box = Box()
+
+	msg_box.x = goal_det[0]
+	msg_box.y = goal_det[1]
+	msg_box.w = goal_det[2]
+	msg_box.h = goal_det[3]
+	if msg_disp_img.f != -1:
+		distance = call_stereo_mode(msg_box, msg_disp_img)
+	else:
+		distance = -1
+	run_goal_det_pub(msg_box, goal_det[4], goal_det[5], msg_img, distance)
+	if distance != -1:
+		# to do: включить rescue_mode через сервис
+		print("включить rescue_mode через сервис")
+		res = 0 # будет call_...
+		if res == 0:
+			is_on_rescue = True
+			start_time = time.time() # нужно для имитации работы rescue_mode
+			return
+	reset_fields()
+	# to do: включить search_mode через сервис
+	print("4444444444444444444 включить search_mode через сервис")
+	print("4444444444444444444++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
+	is_on_search = True
+
+
+def run_goal_det_pub(msg_box, confidence, class_id, msg_img, distance):
 	print("===run_goal_det_pub===")
 	msg = DetArray()
 	msg_det = Det()
 
-	msg_det.bbox.x = goal_det[0]
-	msg_det.bbox.y = goal_det[1]
-	msg_det.bbox.w = goal_det[2]
-	msg_det.bbox.h = goal_det[3]
-	msg_det.confidence = goal_det[4]
-	msg_det.class_id = goal_det[5]
+	msg_det.bbox = msg_box
+	msg_det.confidence = confidence
+	msg_det.class_id = class_id
 
 	msg.dets.append(msg_det)
 	msg.img = msg_img
+	msg.distance = distance
 	goal_det_pub.publish(msg)
 
 
 def det_array_callback(msg):
 	global is_on
 	global is_on_search
-	global is_on_stereo_rescue
+	global is_on_rescue
 	global detection_history
 	global is_min_moving
 	global start_time
 
 	if not is_on:
 		return
-	if is_on_stereo_rescue:
-		if time.time() - start_time >= 10: # заглушка: имитация работы stereo_node и rescue_node
-			# to do: выключить stereo_node и rescue_node через сервис
-			print("2222 выключить stereo_node и rescue_node через сервис")
-			is_on_stereo_rescue = False
+	if is_on_rescue:
+		if time.time() - start_time >= 10: # заглушка: имитация работы rescue_mode
+			# to do: выключить rescue_mode через сервис
+			print("2222 выключить rescue_mode через сервис")
+			is_on_rescue = False
 			reset_fields()
 			print("after 10 seconds")
-			# to do: включить search_node через сервис
-			print("3333333333333333333 включить search_node через сервис")
+			# to do: включить search_mode через сервис
+			print("3333333333333333333 включить search_mode через сервис")
 			print("3333333333333333333++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
 			is_on_search = True
 		else:
@@ -245,56 +279,73 @@ def det_array_callback(msg):
 	# если запускать на своем ноутбуке (иначе - закомментить)
 	img_rgb = img_bgr
 	cv2.imshow(NODE_NAME, img_rgb)
+	# потом обязательно удалить {
+	if msg.disp_img.f != -1:
+		disp_img_image = cv_bridge.imgmsg_to_cv2(msg.disp_img.image, desired_encoding="32FC1")
+		# нормализация диспаритета для перевода в 8-битный формат
+		norm_disp_img_image = cv2.normalize(disp_img_image, None, 0, 255, cv2.NORM_MINMAX)
+		# приведение к uint8
+		norm_disp_img_image = np.uint8(norm_disp_img_image)
+		# добавление цвета
+		norm_disp_img_image = cv2.applyColorMap(norm_disp_img_image, cv2.COLORMAP_JET)
+		cv2.imshow(NODE_NAME + "_norm_disp_img_image", norm_disp_img_image)
+		# }
 	cv2.waitKey(1)
 	# }
 
 	if not is_on_search:
 		if time.time() - start_time >= MAX_STOP_TIME:
-			# to do: включить search_node через сервис
-			print("222222222222222 включить search_node через сервис")
+			# to do: включить search_mode через сервис
+			print("222222222222222 включить search_mode через сервис")
 			print("222222222222222++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
 			is_on_search = True
 			is_min_moving = True
 			start_time = time.time()
 			return
 	elif len(msg.dets) != 0: # нужно как можно быстрее остановиться, когда робот кого-то увидел
-		# to do: выключить search_node через сервис
-		print("выключить search_node через сервис")
+		# to do: выключить search_mode через сервис
+		print("выключить search_mode через сервис")
 		print("----------------------------------------STOP----------------------------------------")
 		is_on_search = False
 		start_time = time.time()
 	fit_detection_history(msg.dets)
 	goal_det = get_goal_det()
 	if goal_det is not None:
-		# to do: включить stereo_node через сервис. Данная нода включит rescue_node через сервис и отправит в топик /goal_det детекцию, изображение и расстояние до детекции
-		print("включить stereo_node и rescue_node через сервис")
-		is_on_stereo_rescue = True
-		start_time = time.time()
-		run_goal_det_pub(goal_det, msg.img)
+		start_stereo_rescue_modes(goal_det, msg.img, msg.disp_img)
 
 
 # переключаем режим "group_human_detection" (может в будущем переименовать, например, "autonomous_mode") во вкл/выкл состояние
 def handle_det_group_mode_switch(req):
 	global is_on
 	global is_on_search
-	global is_on_stereo_rescue
+	global is_on_rescue
 
 	is_on = req.is_on
 	if is_on: # первым делом при включении алгоритма обязательно нужно сбросить все переменные
 		reset_fields()
-		# to do: включить search_node через сервис
-		print("включить search_node через сервис")
+		# to do: включить search_mode через сервис
+		print("включить search_mode через сервис")
 		print("++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
 		is_on_search = True
 	else:
-		# to do: выключить search_node через сервис
-		print("2222222222222222 выключить search_node через сервис")
+		# to do: выключить search_mode через сервис
+		print("2222222222222222 выключить search_mode через сервис")
 		print("2222222222222222----------------------------------------STOP----------------------------------------")
 		is_on_search = False
-		# to do: выключить stereo_node и rescue_node через сервис
-		print("выключить stereo_node и rescue_node через сервис")
-		is_on_stereo_rescue = False
+		# to do: выключить rescue_mode через сервис
+		print("выключить rescue_mode через сервис")
+		is_on_rescue = False
 	return DetModeSwitchResponse(0) # операция прошла успешно
+
+
+def call_stereo_mode(msg_box, msg_disp_img):
+	print("===call_stereo_mode===")
+	try:
+		res = stereo_mode_client(msg_box, msg_disp_img)
+		return res.distance
+	except rospy.ServiceException as e:
+		rospy.logerr("error from stereo_mode: %s" % e)
+		return -1
 
 
 def main() -> None:
