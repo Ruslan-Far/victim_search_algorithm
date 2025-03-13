@@ -20,11 +20,12 @@ GOAL_DET_TOPIC = "/goal_det"
 DET_GROUP_MODE_SWITCH_SRV = "det_group_mode_switch"
 STEREO_MODE_SRV = "stereo_mode"
 
-MAX_FRAMES = 10 # в будущем заменить на более маленькое число
-MIN_DETECTION_RATE = 0.7 # в будущем заменить на более маленькое число
+MAX_FRAMES = 1
+MIN_DETECTION_RATE = 0.7
 MIN_IOU = 0.8
 MAX_STOP_TIME = 20 # seconds
 MIN_MOVING_TIME = 5 # seconds
+MIN_DISTANCE = 0.45 # m (расстояние стереопары робота от его начала)
 
 goal_det_pub = rospy.Publisher(GOAL_DET_TOPIC, DetArray, queue_size=1)
 
@@ -211,7 +212,7 @@ def start_stereo_rescue_modes(goal_det, msg_img, msg_disp_img):
 	else:
 		distance = -1
 	run_goal_det_pub(msg_box, goal_det[4], goal_det[5], msg_img, distance)
-	if distance != -1:
+	if distance != -1 and distance != 0 and distance > MIN_DISTANCE:
 		# to do: включить rescue_mode через сервис
 		print("включить rescue_mode через сервис")
 		res = 0 # будет call_...
@@ -282,13 +283,18 @@ def det_array_callback(msg):
 	# потом обязательно удалить {
 	if msg.disp_img.f != -1:
 		disp_img_image = cv_bridge.imgmsg_to_cv2(msg.disp_img.image, desired_encoding="32FC1")
-		# нормализация диспаритета для перевода в 8-битный формат
+		# msg.disp_img.min_disparity должен быть >= 1
+		depth_map = np.where(disp_img_image >= msg.disp_img.min_disparity, (msg.disp_img.f * msg.disp_img.T) / disp_img_image, 0)
+		# нормализация для перевода в 8-битный формат
 		norm_disp_img_image = cv2.normalize(disp_img_image, None, 0, 255, cv2.NORM_MINMAX)
+		norm_depth_map = cv2.normalize(depth_map, None, 0, 255, cv2.NORM_MINMAX)
 		# приведение к uint8
 		norm_disp_img_image = np.uint8(norm_disp_img_image)
+		norm_depth_map = np.uint8(norm_depth_map)
 		# добавление цвета
 		norm_disp_img_image = cv2.applyColorMap(norm_disp_img_image, cv2.COLORMAP_JET)
 		cv2.imshow(NODE_NAME + "_norm_disp_img_image", norm_disp_img_image)
+		cv2.imshow(NODE_NAME + "_norm_depth_map", norm_depth_map)
 		# }
 	cv2.waitKey(1)
 	# }
