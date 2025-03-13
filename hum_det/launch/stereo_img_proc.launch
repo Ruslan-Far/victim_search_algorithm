@@ -1,0 +1,9 @@
+<launch>
+	<group ns="narrow_stereo_textured">
+		<node name="stereo_image_proc" pkg="stereo_image_proc" type="stereo_image_proc" output="screen">
+			<param name="min_disparity" value="10"/>
+			<param name="disparity_range" value="128"/>
+			<param name="speckle_size" value="1000"/>
+		</node>
+	</group>
+</launch>

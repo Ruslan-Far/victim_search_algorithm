@@ -52,7 +52,6 @@ const std::string MODEL_PATH = "/home/ruslan/kpfu/magistracy/ml_models/usar_engi
 // engineer
 // const std::string MODEL_PATH = "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer6_ep0-20_yolov10s/best_openvino_conv_model/best.xml";
 
-
 std::vector<std::string> class_names;
 
 const float CONFIDENCE_THRESHOLD = 0.5;

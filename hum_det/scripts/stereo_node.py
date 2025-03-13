@@ -23,6 +23,8 @@ def handle_stereo_mode(req):
 	print("req.disp_img.T:", req.disp_img.T)
 	print("req.disp_img.image.width:", req.disp_img.image.width)
 	print("req.disp_img.image.height:", req.disp_img.image.height)
+	print("req.min_disparity:", req.min_disparity)
+	print("req.max_disparity:", req.max_disparity)
 
 	disp_img_image = cv_bridge.imgmsg_to_cv2(req.disp_img.image, desired_encoding="32FC1") # to do: использовать для подсчета расстояния
 	# потом обязательно удалить {
@@ -32,7 +34,11 @@ def handle_stereo_mode(req):
 	norm_disp_img_image = np.uint8(norm_disp_img_image)
 	# добавление цвета
 	norm_disp_img_image = cv2.applyColorMap(norm_disp_img_image, cv2.COLORMAP_JET)
+	# req.min_disparity должен быть >= 1
+	depth_map = np.where(disp_img_image >= req.min_disparity, (req.disp_img.f * req.disp_img.T) / disp_img_image, req.max_disparity)
+
 	cv2.imshow(NODE_NAME + "_norm_disp_img_image", norm_disp_img_image)
+	cv2.imshow(NODE_NAME + "_depth_map", depth_map / req.max_disparity)
 	cv2.waitKey(1)
 	# }
 
