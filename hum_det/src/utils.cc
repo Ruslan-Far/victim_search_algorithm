@@ -5,7 +5,7 @@
 #include <cmath>
 
 
-void DrawDetectedObject(cv::Mat &frame, const std::vector<yolo::Detection> &detections, const std::vector<std::string> &class_names) {	
+void DrawDetectedObject(cv::Mat &frame, const std::vector<yolo::Detection> &detections, const std::vector<std::string> &class_names, const float &distance) {	
 	for (const auto &detection : detections) {
 		const cv::Rect &box = detection.box;
 		const float &confidence = round(detection.confidence * 100.0) / 100.0;
@@ -19,6 +19,8 @@ void DrawDetectedObject(cv::Mat &frame, const std::vector<yolo::Detection> &dete
 			class_string = "id[" + std::to_string(class_id) + "] " + std::to_string(confidence).substr(0, 4);
 		else
 			class_string = class_names[class_id] + " " + std::to_string(confidence).substr(0, 4);
+		if (distance != -1) // distance: m -> cm
+			class_string = std::to_string((int) (distance * 100)) + "cm " + class_string;
 
 		const cv::Size text_size = cv::getTextSize(class_string, cv::FONT_HERSHEY_SIMPLEX, 0.6, 2, 0);
 

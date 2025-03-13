@@ -29,7 +29,7 @@ def handle_stereo_mode(req):
 	print("req.disp_img.min_disparity:", req.disp_img.min_disparity)
 	print("req.disp_img.max_disparity:", req.disp_img.max_disparity)
 
-	disp_img_image = cv_bridge.imgmsg_to_cv2(req.disp_img.image, desired_encoding="32FC1") # to do: использовать для подсчета расстояния
+	disp_img_image = cv_bridge.imgmsg_to_cv2(req.disp_img.image, desired_encoding="32FC1") # используется для подсчета расстояния
 	roi = disp_img_image[req.bbox.y:req.bbox.y+req.bbox.h, req.bbox.x:req.bbox.x+req.bbox.w]
 	# req.disp_img.min_disparity должен быть >= 1
 	depth_map = np.where(roi >= req.disp_img.min_disparity, (req.disp_img.f * req.disp_img.T) / roi, 0)

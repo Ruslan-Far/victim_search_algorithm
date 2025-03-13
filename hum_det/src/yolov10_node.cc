@@ -79,7 +79,7 @@ void camera_img_callback(const sensor_msgs::Image::ConstPtr &msg) {
 		ROS_INFO("time_took: %f", time_took.count());
 		print_time_took_mean_sum(time_took.count());
 		run_det_array_pub(detections, msg, msg_disp_img);
-		DrawDetectedObject(img_rgb, detections, class_names);
+		DrawDetectedObject(img_rgb, detections, class_names, -1);
 		// отправить для показа в GUI (engineer)
 		// cv::Mat img_bgr;
 		// cv::cvtColor(img_rgb, img_bgr, CV_RGB2BGR);
@@ -113,7 +113,7 @@ void goal_det_callback(const hum_det::DetArray::ConstPtr &msg) {
 		detections.push_back(result);
 	}
 	ROS_INFO("msg->distance = %f", msg->distance);
-	DrawDetectedObject(img_rgb, detections, class_names);
+	DrawDetectedObject(img_rgb, detections, class_names, msg->distance);
 	// отправить для показа в GUI (engineer)
 	// cv::Mat img_bgr;
 	// cv::cvtColor(img_rgb, img_bgr, CV_RGB2BGR);
@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
 // 	auto end_time = std::chrono::high_resolution_clock::now();
 // 	std::chrono::duration<double> time_took = end_time - start_time;
 // 	ROS_INFO("time_took: %f", time_took.count());
-// 	DrawDetectedObject(img_rgb, detections, class_names);
+// 	DrawDetectedObject(img_rgb, detections, class_names, -1);
 // 	// просто для показа
 // 	cv::imshow(NODE_NAME, img_rgb);
 // 	cv::waitKey(0);
