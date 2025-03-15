@@ -32,7 +32,7 @@ def handle_stereo_mode(req):
 	disp_img_image = cv_bridge.imgmsg_to_cv2(req.disp_img.image, desired_encoding="32FC1") # используется для подсчета расстояния
 	roi = disp_img_image[req.bbox.y:req.bbox.y+req.bbox.h, req.bbox.x:req.bbox.x+req.bbox.w]
 	# req.disp_img.min_disparity должен быть >= 1
-	depth_map = np.where(roi >= req.disp_img.min_disparity, (req.disp_img.f * req.disp_img.T) / roi, 0)
+	depth_map = np.where(roi >= req.disp_img.min_disparity, req.disp_img.f * req.disp_img.T / roi, 0)
 	valid_pixels = depth_map[depth_map > 0]
 	if valid_pixels.size > 0:
 		median_distance = np.median(valid_pixels) # медиана
@@ -45,10 +45,8 @@ def handle_stereo_mode(req):
 		distance = 0
 	print(f"valid_pixels.size: {valid_pixels.size}")
 	# потом обязательно удалить {
-	# нормализация для перевода в 8-битный формат
-	norm_depth_map = cv2.normalize(depth_map, None, 0, 255, cv2.NORM_MINMAX)
-	# приведение к uint8
-	norm_depth_map = np.uint8(norm_depth_map)
+	max_distance = req.disp_img.f * req.disp_img.T / req.disp_img.min_disparity
+	norm_depth_map = (255 * depth_map / max_distance).astype(np.uint8)
 	norm_depth_map_pub.publish(cv_bridge.cv2_to_imgmsg(norm_depth_map, "mono8"))
 	# }
 	print("before return")

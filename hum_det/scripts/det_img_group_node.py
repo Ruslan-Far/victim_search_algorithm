@@ -192,6 +192,12 @@ def get_goal_det():
 	print("h", h)
 	print("max_class_id", max_class_id)
 	print("max_avg_conf", max_avg_conf)
+	if x < 0:
+		x = 0
+		print("repeat x:", x)
+	if y < 0:
+		y = 0
+		print("repeat y:", y)
 	return [int(x), int(y), int(w), int(h), float(max_avg_conf), int(max_class_id)]
 
 
@@ -284,16 +290,9 @@ def det_array_callback(msg):
 	if msg.disp_img.f != -1:
 		disp_img_image = cv_bridge.imgmsg_to_cv2(msg.disp_img.image, desired_encoding="32FC1")
 		# msg.disp_img.min_disparity должен быть >= 1
-		depth_map = np.where(disp_img_image >= msg.disp_img.min_disparity, (msg.disp_img.f * msg.disp_img.T) / disp_img_image, 0)
-		# нормализация для перевода в 8-битный формат
-		norm_disp_img_image = cv2.normalize(disp_img_image, None, 0, 255, cv2.NORM_MINMAX)
-		norm_depth_map = cv2.normalize(depth_map, None, 0, 255, cv2.NORM_MINMAX)
-		# приведение к uint8
-		norm_disp_img_image = np.uint8(norm_disp_img_image)
-		norm_depth_map = np.uint8(norm_depth_map)
-		# добавление цвета
-		norm_disp_img_image = cv2.applyColorMap(norm_disp_img_image, cv2.COLORMAP_JET)
-		cv2.imshow(NODE_NAME + "_norm_disp_img_image", norm_disp_img_image)
+		depth_map = np.where(disp_img_image >= msg.disp_img.min_disparity, msg.disp_img.f * msg.disp_img.T / disp_img_image, 0)
+		max_distance = msg.disp_img.f * msg.disp_img.T / msg.disp_img.min_disparity
+		norm_depth_map = (255 * depth_map / max_distance).astype(np.uint8)
 		cv2.imshow(NODE_NAME + "_norm_depth_map", norm_depth_map)
 		# }
 	cv2.waitKey(1)
