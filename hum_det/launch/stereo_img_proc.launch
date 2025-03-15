@@ -1,5 +1,6 @@
 <launch>
-	<group ns="narrow_stereo_textured">
+	<!-- <group ns="narrow_stereo_textured"> -->
+	<group ns="wide_stereo">
 		<node name="stereo_image_proc" pkg="stereo_image_proc" type="stereo_image_proc" output="screen">
 			<param name="min_disparity" value="10"/>
 			<param name="disparity_range" value="128"/>
