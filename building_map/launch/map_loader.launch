@@ -1,0 +1,22 @@
+<launch>    
+
+	<arg name="model" default="waffle"/>
+
+	<!-- Run Gazebo with turtlebot3 -->
+	<include file="$(find turtlebot3_gazebo)/launch/turtlebot3_house.launch"/>
+
+	<!-- Load existing map -->
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find building_map)/maps/map.yaml">
+		<param name="frame_id" value="loaded_map"/>
+		<remap from="/map" to="/loaded_map"/>
+		<remap from="/map_metadata" to="/loaded_map_metadata"/>
+	</node>
+
+	<!-- Publish a static transformation between /odom and /map -->
+	<node name="tf" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /odom /loaded_map 100" />
+
+	<include file="$(find turtlebot3_slam)/launch/turtlebot3_slam.launch">
+		<arg name="slam_methods" value="gmapping"/>
+	</include>
+
+</launch>

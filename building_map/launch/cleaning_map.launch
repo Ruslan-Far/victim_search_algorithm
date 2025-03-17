@@ -1,0 +1,5 @@
+<launch>    
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find building_map)/maps/map.yaml"/>
+	<node name="map_cleaner_node" pkg="building_map" type="map_cleaner_node" output="screen"/>
+	<node name="map_transfer_node" pkg="building_map" type="map_transfer_node" output="screen"/>
+</launch>

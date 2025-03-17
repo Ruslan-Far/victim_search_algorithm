@@ -1,0 +1,4 @@
+<launch>
+	<!-- <node name="map_saver" pkg="map_server" type="map_saver" args="-f $(find building_map)/maps/map map:=/map"/> -->
+	<node name="map_saver" pkg="map_server" type="map_saver" args="-f $(find building_map)/maps/cleaned_map map:=/map_transfer_node/cleaned_map"/>
+</launch>

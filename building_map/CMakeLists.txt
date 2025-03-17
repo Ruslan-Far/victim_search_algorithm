@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+  nav_msgs
   message_generation
 )
 
@@ -57,11 +58,10 @@ find_package(OpenCV REQUIRED)
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  CleanedMap.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -71,9 +71,11 @@ find_package(OpenCV REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  nav_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -107,7 +109,7 @@ find_package(OpenCV REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES building_map
- CATKIN_DEPENDS cv_bridge gazebo_ros image_transport roscpp rospy sensor_msgs std_msgs message_runtime
+ CATKIN_DEPENDS cv_bridge gazebo_ros image_transport roscpp rospy sensor_msgs std_msgs nav_msgs message_runtime
 #  DEPENDS system_lib
 )
 
@@ -135,6 +137,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
+add_executable(map_cleaner_node src/map_cleaner_node.cpp)
+add_executable(map_transfer_node src/map_transfer_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -144,9 +148,16 @@ include_directories(
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(map_cleaner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(map_transfer_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
+target_link_libraries(map_cleaner_node
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(map_transfer_node
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
