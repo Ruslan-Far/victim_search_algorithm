@@ -19,8 +19,9 @@ GOAL_DET_TOPIC = "/goal_det"
 
 DET_GROUP_MODE_SWITCH_SRV = "det_group_mode_switch"
 STEREO_MODE_SRV = "stereo_mode"
+SEARCH_MODE_SWITCH_SRV = "search_mode_switch"
 
-MAX_FRAMES = 1
+MAX_FRAMES = 10
 MIN_DETECTION_RATE = 0.7
 MIN_IOU = 0.8
 MAX_STOP_TIME = 20 # seconds
@@ -30,10 +31,11 @@ MIN_DISTANCE = 0.45 # m (расстояние стереопары робота 
 goal_det_pub = rospy.Publisher(GOAL_DET_TOPIC, DetArray, queue_size=1)
 
 stereo_mode_client = rospy.ServiceProxy(STEREO_MODE_SRV, StereoMode)
+search_mode_switch_client = rospy.ServiceProxy(SEARCH_MODE_SWITCH_SRV, DetModeSwitch)
 
 cv_bridge = CvBridge() # delete
 is_on = False
-is_on_search = False # будет нужен для search_mode
+is_on_search = False
 is_on_rescue = False # будет нужен для rescue_mode
 detection_history = []
 is_min_moving = False # нужно, чтобы старые изображения (которые в пределах MIN_MOVING_TIME) не обрабатывались вообще уже во время работы search_mode
@@ -227,10 +229,8 @@ def start_stereo_rescue_modes(goal_det, msg_img, msg_disp_img):
 			start_time = time.time() # нужно для имитации работы rescue_mode
 			return
 	reset_fields()
-	# to do: включить search_mode через сервис
 	print("4444444444444444444 включить search_mode через сервис")
-	print("4444444444444444444++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
-	is_on_search = True
+	call_search_mode_switch(True)
 
 
 def run_goal_det_pub(msg_box, confidence, class_id, msg_img, distance):
@@ -265,10 +265,8 @@ def det_array_callback(msg):
 			is_on_rescue = False
 			reset_fields()
 			print("after 10 seconds")
-			# to do: включить search_mode через сервис
 			print("3333333333333333333 включить search_mode через сервис")
-			print("3333333333333333333++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
-			is_on_search = True
+			call_search_mode_switch(True)
 		else:
 			return
 	elif is_min_moving:
@@ -300,18 +298,14 @@ def det_array_callback(msg):
 
 	if not is_on_search:
 		if time.time() - start_time >= MAX_STOP_TIME:
-			# to do: включить search_mode через сервис
 			print("222222222222222 включить search_mode через сервис")
-			print("222222222222222++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
-			is_on_search = True
+			call_search_mode_switch(True)
 			is_min_moving = True
 			start_time = time.time()
 			return
 	elif len(msg.dets) != 0: # нужно как можно быстрее остановиться, когда робот кого-то увидел
-		# to do: выключить search_mode через сервис
 		print("выключить search_mode через сервис")
-		print("----------------------------------------STOP----------------------------------------")
-		is_on_search = False
+		call_search_mode_switch(False)
 		start_time = time.time()
 	fit_detection_history(msg.dets)
 	goal_det = get_goal_det()
@@ -328,15 +322,11 @@ def handle_det_group_mode_switch(req):
 	is_on = req.is_on
 	if is_on: # первым делом при включении алгоритма обязательно нужно сбросить все переменные
 		reset_fields()
-		# to do: включить search_mode через сервис
 		print("включить search_mode через сервис")
-		print("++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
-		is_on_search = True
+		call_search_mode_switch(True)
 	else:
-		# to do: выключить search_mode через сервис
 		print("2222222222222222 выключить search_mode через сервис")
-		print("2222222222222222----------------------------------------STOP----------------------------------------")
-		is_on_search = False
+		call_search_mode_switch(False)
 		# to do: выключить rescue_mode через сервис
 		print("выключить rescue_mode через сервис")
 		is_on_rescue = False
@@ -351,6 +341,22 @@ def call_stereo_mode(msg_box, msg_disp_img):
 	except rospy.ServiceException as e:
 		rospy.logerr("error from stereo_mode: %s" % e)
 		return -1
+
+
+def call_search_mode_switch(msg_is_on):
+	global is_on_search
+
+	rospy.loginfo("===call_search_mode_switch===")
+	try:
+		res = search_mode_switch_client(msg_is_on)
+		if res.code == 0:
+			if msg_is_on:
+				rospy.loginfo("++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
+			else:
+				rospy.loginfo("----------------------------------------STOP----------------------------------------")
+			is_on_search = msg_is_on
+	except rospy.ServiceException as e:
+		rospy.logerr("error from search_mode_switch: %s" % e)
 
 
 def main() -> None:
