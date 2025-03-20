@@ -1,0 +1,10 @@
+<launch>  
+  <param name="x_min" value="-3"/>
+  <param name="x_max" value="-1"/>
+  <param name="y_min" value="1"/>
+  <param name="y_max" value="4"/>
+  <param name="grid_step" value="1"/>
+  <param name="/use_sim_time" value="true"/>
+  
+  <node name="search_node" pkg="sar" type="search_node.py" output="screen"/>
+</launch>
