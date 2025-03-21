@@ -1,0 +1,7 @@
+bool is_on
+int32 x
+int32 cx
+float32 distance
+float32 f
+---
+int32 code
