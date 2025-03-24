@@ -71,7 +71,7 @@ def handle_search_mode_switch(req):
 	rospy.loginfo(f"is_on: {is_on}")
 	if not is_on:
 		move_base_action_client.cancel_goal()
-	return DetModeSwitchResponse(0) # операция прошла успешно
+	return ModeSwitchResponse(0) # операция прошла успешно
 
 
 def call_action_move_base(x, y, timeout):
@@ -92,7 +92,7 @@ if __name__ == '__main__':
 	try:
 		rospy.init_node(NODE_NAME)
 
-		search_mode_switch_server = rospy.Service(SEARCH_MODE_SWITCH_SRV, DetModeSwitch, handle_search_mode_switch)
+		search_mode_switch_server = rospy.Service(SEARCH_MODE_SWITCH_SRV, ModeSwitch, handle_search_mode_switch)
 
 		search()
 	except rospy.ROSInterruptException:

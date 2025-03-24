@@ -7,7 +7,7 @@
 # include <stereo_msgs/DisparityImage.h>
 # include "hum_det/Det.h"
 # include "hum_det/DetArray.h"
-# include "hum_det/DetModeSwitch.h"
+# include "hum_det/ModeSwitch.h"
 # include "inference.h"
 # include "utils.h"
 # include <cv_bridge/cv_bridge.h>

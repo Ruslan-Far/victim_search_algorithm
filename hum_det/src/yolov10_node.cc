@@ -133,7 +133,7 @@ void goal_det_callback(const hum_det::DetArray::ConstPtr &msg) {
 
 
 // переключаем режим "human_detection" во вкл/выкл состояние
-bool handle_det_mode_switch(hum_det::DetModeSwitch::Request &req, hum_det::DetModeSwitch::Response &res) {
+bool handle_det_mode_switch(hum_det::ModeSwitch::Request &req, hum_det::ModeSwitch::Response &res) {
 	is_on = req.is_on;
 	if (is_on) {
 		reset_fields(is_on);

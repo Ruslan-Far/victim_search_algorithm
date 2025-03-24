@@ -9,7 +9,7 @@ DET_MODE_SWITCH_SRV = "det_mode_switch"
 def call_det_mode_switch(is_on):
     rospy.wait_for_service(DET_MODE_SWITCH_SRV)
     try:
-        det_mode_switch = rospy.ServiceProxy(DET_MODE_SWITCH_SRV, DetModeSwitch)
+        det_mode_switch = rospy.ServiceProxy(DET_MODE_SWITCH_SRV, ModeSwitch)
         res = det_mode_switch(is_on)
         return res.code
     except rospy.ServiceException as e:

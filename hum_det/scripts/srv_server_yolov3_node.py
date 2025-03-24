@@ -90,7 +90,7 @@ def handle_det_mode_switch(req):
 	is_on = req.is_on
 	if is_on:
 		reset_fields()
-	return DetModeSwitchResponse(0)
+	return ModeSwitchResponse(0)
 
 
 def img_callback(msg: Image, cv_bridge: CvBridge, img_publisher: rospy.Publisher) -> None:
@@ -197,7 +197,7 @@ def main() -> None:
 
 	img_publisher = rospy.Publisher(IMG_PUB_TOPIC, Image, queue_size=1)
 	rospy.Subscriber(IMG_SUB_TOPIC, Image, lambda msg: img_callback(msg, cv_bridge, img_publisher), queue_size=None)
-	rospy.Service(DET_MODE_SWITCH_SRV, DetModeSwitch, handle_det_mode_switch)
+	rospy.Service(DET_MODE_SWITCH_SRV, ModeSwitch, handle_det_mode_switch)
 
 	rospy.spin()
 

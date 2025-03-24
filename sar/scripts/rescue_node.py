@@ -17,7 +17,7 @@ RESCUE_MODE_SWITCH_FEEDBACK_SRV = "rescue_mode_switch_feedback"
 
 MOVE_BASE_ACTION = "move_base"
 
-rescue_mode_switch_feedback_client = rospy.ServiceProxy(RESCUE_MODE_SWITCH_FEEDBACK_SRV, DetModeSwitch)
+rescue_mode_switch_feedback_client = rospy.ServiceProxy(RESCUE_MODE_SWITCH_FEEDBACK_SRV, ModeSwitch)
 
 move_base_action_client = actionlib.SimpleActionClient(MOVE_BASE_ACTION, MoveBaseAction)
 

@@ -3,6 +3,7 @@
 import rospy
 from hum_det.msg import DetArray, Det, Box
 from hum_det.srv import *
+from sar.srv import *
 from cv_bridge import CvBridge
 import cv2
 import time
@@ -20,6 +21,8 @@ GOAL_DET_TOPIC = "/goal_det"
 DET_GROUP_MODE_SWITCH_SRV = "det_group_mode_switch"
 STEREO_MODE_SRV = "stereo_mode"
 SEARCH_MODE_SWITCH_SRV = "search_mode_switch"
+RESCUE_MODE_SWITCH_SRV = "rescue_mode_switch"
+RESCUE_MODE_SWITCH_FEEDBACK_SRV = "rescue_mode_switch_feedback"
 
 MAX_FRAMES = 10
 MIN_DETECTION_RATE = 0.7
@@ -31,12 +34,13 @@ MIN_DISTANCE = 0.45 # m (расстояние стереопары робота 
 goal_det_pub = rospy.Publisher(GOAL_DET_TOPIC, DetArray, queue_size=1)
 
 stereo_mode_client = rospy.ServiceProxy(STEREO_MODE_SRV, StereoMode)
-search_mode_switch_client = rospy.ServiceProxy(SEARCH_MODE_SWITCH_SRV, DetModeSwitch)
+search_mode_switch_client = rospy.ServiceProxy(SEARCH_MODE_SWITCH_SRV, ModeSwitch)
+rescue_mode_switch_client = rospy.ServiceProxy(RESCUE_MODE_SWITCH_SRV, RescueModeSwitch)
 
 cv_bridge = CvBridge() # delete
 is_on = False
 is_on_search = False
-is_on_rescue = False # будет нужен для rescue_mode
+is_on_rescue = False
 detection_history = []
 is_min_moving = False # нужно, чтобы старые изображения (которые в пределах MIN_MOVING_TIME) не обрабатывались вообще уже во время работы search_mode
 start_time = 0
@@ -221,12 +225,10 @@ def start_stereo_rescue_modes(goal_det, msg_img, msg_disp_img):
 		distance = -1
 	run_goal_det_pub(msg_box, goal_det[4], goal_det[5], msg_img, distance)
 	if distance != -1 and distance != 0 and distance > MIN_DISTANCE:
-		# to do: включить rescue_mode через сервис
 		print("включить rescue_mode через сервис")
-		res = 0 # будет call_...
-		if res == 0:
-			is_on_rescue = True
-			start_time = time.time() # нужно для имитации работы rescue_mode
+		call_rescue_mode_switch(True)
+		if is_on_rescue:
+			start_time = time.time() # нужно для подстраховки на случай того, если rescue_mode не уведомит о завершении своей работы по каким-либо техническим причинам
 			return
 	reset_fields()
 	print("4444444444444444444 включить search_mode через сервис")
@@ -259,12 +261,11 @@ def det_array_callback(msg):
 	if not is_on:
 		return
 	if is_on_rescue:
-		if time.time() - start_time >= 10: # заглушка: имитация работы rescue_mode
-			# to do: выключить rescue_mode через сервис
+		if time.time() - start_time >= 1000: # нужно для подстраховки на случай того, если rescue_mode не уведомит о завершении своей работы по каким-либо техническим причинам
 			print("2222 выключить rescue_mode через сервис")
-			is_on_rescue = False
+			call_rescue_mode_switch(False)
 			reset_fields()
-			print("after 10 seconds")
+			print("after 1000 seconds")
 			print("3333333333333333333 включить search_mode через сервис")
 			call_search_mode_switch(True)
 		else:
@@ -300,9 +301,10 @@ def det_array_callback(msg):
 		if time.time() - start_time >= MAX_STOP_TIME:
 			print("222222222222222 включить search_mode через сервис")
 			call_search_mode_switch(True)
-			is_min_moving = True
-			start_time = time.time()
-			return
+			if is_on_search: # нужно для того, чтобы иметь возможность подъехать к пострадавшему даже при отказе работы search_mode
+				is_min_moving = True
+				start_time = time.time()
+				return
 	elif len(msg.dets) != 0: # нужно как можно быстрее остановиться, когда робот кого-то увидел
 		print("выключить search_mode через сервис")
 		call_search_mode_switch(False)
@@ -327,10 +329,19 @@ def handle_det_group_mode_switch(req):
 	else:
 		print("2222222222222222 выключить search_mode через сервис")
 		call_search_mode_switch(False)
-		# to do: выключить rescue_mode через сервис
 		print("выключить rescue_mode через сервис")
-		is_on_rescue = False
-	return DetModeSwitchResponse(0) # операция прошла успешно
+		call_rescue_mode_switch(False)
+	return ModeSwitchResponse(0) # операция прошла успешно
+
+
+def handle_rescue_mode_switch_feedback(req):
+	global is_on_rescue
+
+	rospy.loginfo("===handle_rescue_mode_switch_feedback===")
+	is_on_rescue = req.is_on
+	reset_fields()
+	rospy.loginfo("555555555555555555555 включить search_mode через сервис")
+	call_search_mode_switch(True)
 
 
 def call_stereo_mode(msg_box, msg_disp_img):
@@ -348,15 +359,27 @@ def call_search_mode_switch(msg_is_on):
 
 	rospy.loginfo("===call_search_mode_switch===")
 	try:
-		res = search_mode_switch_client(msg_is_on)
-		if res.code == 0:
-			if msg_is_on:
-				rospy.loginfo("++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
-			else:
-				rospy.loginfo("----------------------------------------STOP----------------------------------------")
-			is_on_search = msg_is_on
+		search_mode_switch_client(msg_is_on)
+		if msg_is_on:
+			rospy.loginfo("++++++++++++++++++++++++++++++++++++++++RUN++++++++++++++++++++++++++++++++++++++++")
+		else:
+			rospy.loginfo("----------------------------------------STOP----------------------------------------")
+		is_on_search = msg_is_on
 	except rospy.ServiceException as e:
 		rospy.logerr("error from search_mode_switch: %s" % e)
+		is_on_search = False
+
+
+def call_rescue_mode_switch(msg_is_on):
+	global is_on_rescue
+
+	rospy.loginfo("===call_rescue_mode_switch===")
+	try:
+		rescue_mode_switch_client(msg_is_on)
+		is_on_rescue = msg_is_on
+	except rospy.ServiceException as e:
+		rospy.logerr("error from rescue_mode_switch: %s" % e)
+		is_on_rescue = False
 
 
 def main() -> None:
@@ -364,7 +387,8 @@ def main() -> None:
 
 	det_array_sub = rospy.Subscriber(DET_ARRAY_TOPIC, DetArray, det_array_callback, queue_size=1)
 
-	det_group_mode_switch_server = rospy.Service(DET_GROUP_MODE_SWITCH_SRV, DetModeSwitch, handle_det_group_mode_switch)
+	det_group_mode_switch_server = rospy.Service(DET_GROUP_MODE_SWITCH_SRV, ModeSwitch, handle_det_group_mode_switch)
+	rescue_mode_switch_feedback_server = rospy.Service(RESCUE_MODE_SWITCH_FEEDBACK_SRV, ModeSwitch, handle_rescue_mode_switch_feedback)
 
 	rospy.spin()
 
