@@ -250,7 +250,7 @@
   </joint>
   <link name="camera_depth_optical_frame"/>
 
-  <xacro:stereo_camera_v0 name="wide_stereo" parent="base_link" focal_length="319.998825" hfov="90" image_format="BAYER_BGGR8" image_width="640" image_height="480">
+  <xacro:stereo_camera_v0 name="wide_stereo" parent="base_link" focal_length="319.998825" hfov="90" image_format="R8G8B8" image_width="640" image_height="480">
     <origin xyz="0.06 0.045 0.14" rpy="0 0 0"/>
   </xacro:stereo_camera_v0>
 

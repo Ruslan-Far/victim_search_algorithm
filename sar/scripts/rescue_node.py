@@ -60,9 +60,10 @@ def get_robot_pose():
 
 def get_alpha(x, cx, distance, f):
 	horizontal_offset_x = (cx - x) * distance / f
+	rospy.loginfo(f"horizontal_offset_x: {horizontal_offset_x}")
 	alpha = math.atan(horizontal_offset_x / distance)
-	rospy.loginfo(f"alpha in degrees: {alpha}")
-	return math.radians(alpha)
+	rospy.loginfo(f"alpha in degrees: {math.degrees(alpha)}")
+	return alpha
 
 
 def rescue():
