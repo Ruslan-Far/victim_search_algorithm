@@ -1,6 +1,6 @@
 <launch>  
-  <param name="x_min" value="-3"/>
-  <param name="x_max" value="-1"/>
+  <param name="x_min" value="-4"/>
+  <param name="x_max" value="-3"/>
   <param name="y_min" value="1"/>
   <param name="y_max" value="4"/>
   <param name="grid_step" value="1"/>

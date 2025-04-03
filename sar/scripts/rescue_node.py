@@ -41,7 +41,7 @@ def get_robot_pose():
 
 	while True: # нужен для первого возможного некорректного вызова tf_buffer.lookup_transform
 		try:
-			trans = tf_buffer.lookup_transform("map", "base_link", rospy.Time(0), rospy.Duration(1))
+			trans = tf_buffer.lookup_transform("map", "wide_stereo_l_stereo_camera_frame", rospy.Time(0), rospy.Duration(1))
 			rospy.loginfo("transform found!")
 			x, y = trans.transform.translation.x, trans.transform.translation.y
 			quaternion = trans.transform.rotation
