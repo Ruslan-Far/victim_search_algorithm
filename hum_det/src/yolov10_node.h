@@ -25,6 +25,7 @@ const std::string CAMERA_IMG_TOPIC = "/wide_stereo/left/image_raw";
 // const std::string CAMERA_IMG_TOPIC = "/improved/usb_cam_node/image_raw";
 // const std::string CAMERA_IMG_TOPIC = "/stereo/left/image_raw";
 const std::string CAMERA_DISP_IMG_TOPIC = "/wide_stereo/disparity";
+// const std::string CAMERA_DISP_IMG_TOPIC = "/stereo/disparity";
 const std::string DET_ARRAY_TOPIC = "/det_array";
 const std::string GOAL_DET_TOPIC = "/goal_det";
 
