@@ -1,0 +1,6 @@
+<launch>
+	<!-- в данном файле запускается главный компонент режима работы Autonomous Victim Search: det_img_group_node -->
+	<node name="det_img_group_node" pkg="hum_det" type="det_img_group_node.py" output="screen"/>
+	<!-- вспомогательный компонент режима работы для определения расстояния до обнаруженного объекта -->
+	<node name="stereo_node" pkg="hum_det" type="stereo_node.py" output="screen"/>
+</launch>

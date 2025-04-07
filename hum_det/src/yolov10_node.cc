@@ -24,9 +24,9 @@ void print_time_took_mean_sum(double time_took) {
 }
 
 
-void run_det_img_publisher(const cv::Mat &img, cv_bridge::CvImagePtr &cv_ptr) {
+void run_det_img_pub(const cv::Mat &img, cv_bridge::CvImagePtr &cv_ptr) {
 	cv_ptr->image = img;
-	det_img_publisher.publish(cv_ptr->toImageMsg());
+	det_img_pub.publish(cv_ptr->toImageMsg());
 }
 
 
@@ -69,8 +69,11 @@ void camera_img_callback(const sensor_msgs::Image::ConstPtr &msg) {
 		boost::shared_ptr<stereo_msgs::DisparityImage const> msg_disp_img;
 		msg_disp_img = ros::topic::waitForMessage<stereo_msgs::DisparityImage>(CAMERA_DISP_IMG_TOPIC, ros::Duration(1.0));
 		// }
-		cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); // laptop
-    	// cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8); // engineer
+		cv_bridge::CvImagePtr cv_ptr;
+		if (IS_LAPTOP)
+			cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8); // laptop
+		else
+    		cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8); // engineer
 		cv::Mat img_rgb = cv_ptr->image;
 		auto start_time = std::chrono::high_resolution_clock::now();
 		std::vector<yolo::Detection> detections = (*inference).RunInference(img_rgb);
@@ -80,14 +83,16 @@ void camera_img_callback(const sensor_msgs::Image::ConstPtr &msg) {
 		print_time_took_mean_sum(time_took.count());
 		run_det_array_pub(detections, msg, msg_disp_img);
 		DrawDetectedObject(img_rgb, detections, class_names, -1);
-		// отправить для показа в GUI (engineer)
-		// cv::Mat img_bgr;
-		// cv::cvtColor(img_rgb, img_bgr, CV_RGB2BGR);
-		// run_det_img_publisher(img_bgr, cv_ptr);
-		//
-		// отправить для показа в GUI (laptop)
-		run_det_img_publisher(img_rgb, cv_ptr);
-		//
+		if (IS_LAPTOP) {
+			// отправить для показа в GUI (laptop)
+			run_det_img_pub(img_rgb, cv_ptr);
+		}
+		else {
+			// отправить для показа в GUI (engineer)
+			cv::Mat img_bgr;
+			cv::cvtColor(img_rgb, img_bgr, CV_RGB2BGR);
+			run_det_img_pub(img_bgr, cv_ptr);
+		}
 	}
 	camera_img_callback_count += 1;
 	if (camera_img_callback_count == FREQ) {
@@ -97,8 +102,11 @@ void camera_img_callback(const sensor_msgs::Image::ConstPtr &msg) {
 
 
 void goal_det_callback(const hum_det::DetArray::ConstPtr &msg) {
-	cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg->img, sensor_msgs::image_encodings::BGR8); // laptop
-	// cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg->img, sensor_msgs::image_encodings::RGB8); // engineer
+	cv_bridge::CvImagePtr cv_ptr;
+	if (IS_LAPTOP)
+		cv_ptr = cv_bridge::toCvCopy(msg->img, sensor_msgs::image_encodings::BGR8); // laptop
+	else
+		cv_ptr = cv_bridge::toCvCopy(msg->img, sensor_msgs::image_encodings::RGB8); // engineer
 	cv::Mat img_rgb = cv_ptr->image;
 	std::vector<yolo::Detection> detections;
 
@@ -114,25 +122,23 @@ void goal_det_callback(const hum_det::DetArray::ConstPtr &msg) {
 	}
 	ROS_INFO("msg->distance = %f", msg->distance);
 	DrawDetectedObject(img_rgb, detections, class_names, msg->distance);
-	// отправить для показа в GUI (engineer)
-	// cv::Mat img_bgr;
-	// cv::cvtColor(img_rgb, img_bgr, CV_RGB2BGR);
-	// run_det_img_publisher(img_bgr, cv_ptr);
-	//
-	// отправить для показа в GUI (laptop)
-	run_det_img_publisher(img_rgb, cv_ptr);
+	if (IS_LAPTOP) {
+		// отправить для показа в GUI (laptop)
+		run_det_img_pub(img_rgb, cv_ptr);
+	}
+	else {
+		// отправить для показа в GUI (engineer)
+		cv::Mat img_bgr;
+		cv::cvtColor(img_rgb, img_bgr, CV_RGB2BGR);
+		run_det_img_pub(img_bgr, cv_ptr);
+	}
 	ROS_INFO("before 3 seconds");
 	sleep(3);
 	ROS_INFO("after 3 seconds");
-	//
-	// delete {
-	// cv::imshow(NODE_NAME, img_rgb);
-	// cv::waitKey(1);
-	// }
 }
 
 
-// переключаем режим "human_detection" во вкл/выкл состояние
+// переключаем режим Human Detection во вкл/выкл состояние
 bool handle_det_mode_switch(hum_det::ModeSwitch::Request &req, hum_det::ModeSwitch::Response &res) {
 	is_on = req.is_on;
 	if (is_on) {
@@ -147,9 +153,9 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle node;
 
-	det_img_publisher = node.advertise<sensor_msgs::Image>(DET_IMG_TOPIC, 1); // работает с 0 и 1000 как обычно и время работы не меняется
+	det_img_pub = node.advertise<sensor_msgs::Image>(DET_IMG_TOPIC, 1);
 	det_array_pub = node.advertise<hum_det::DetArray>(DET_ARRAY_TOPIC, 1);
-	camera_img_subscriber = node.subscribe(CAMERA_IMG_TOPIC, 1, camera_img_callback); // работает с 0 и 1000 очень странно, но время работы не меняется. Это работает в замедленном действии: быстро поступающие изображения все сохраняются в буфер и обрабатываются последовательно
+	camera_img_sub = node.subscribe(CAMERA_IMG_TOPIC, 1, camera_img_callback);
 	goal_det_sub = node.subscribe(GOAL_DET_TOPIC, 1, goal_det_callback);
 	
 	det_mode_switch_server = node.advertiseService(DET_MODE_SWITCH_SRV, handle_det_mode_switch);

@@ -2,10 +2,10 @@
 
 import rospy
 from hum_det.msg import DetArray, Det, Box
+from sensor_msgs.msg import Image
 from hum_det.srv import *
 from sar.srv import *
 from cv_bridge import CvBridge
-import cv2
 import time
 import numpy as np
 import sys
@@ -13,31 +13,41 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from det_class import DetClass
 
+IS_TURTLEBOT3 = True # если запуск алгоритма будет производиться на роботе Turtlebot3. Для робота Инженер необходимо поставить False
+
 NODE_NAME = "det_img_group_node"
 
 DET_ARRAY_TOPIC = "/det_array"
 GOAL_DET_TOPIC = "/goal_det"
+NORM_DEPTH_MAP_TOPIC = "/depth_map"
 
-DET_GROUP_MODE_SWITCH_SRV = "det_group_mode_switch"
-STEREO_MODE_SRV = "stereo_mode"
-SEARCH_MODE_SWITCH_SRV = "search_mode_switch"
-RESCUE_MODE_SWITCH_SRV = "rescue_mode_switch"
-RESCUE_MODE_SWITCH_FEEDBACK_SRV = "rescue_mode_switch_feedback"
+DET_GROUP_MODE_SWITCH_SRV = "/det_group_mode_switch"
+STEREO_MODE_SRV = "/stereo_mode"
+SEARCH_MODE_SWITCH_SRV = "/search_mode_switch"
+RESCUE_MODE_SWITCH_SRV = "/rescue_mode_switch"
+RESCUE_MODE_SWITCH_FEEDBACK_SRV = "/rescue_mode_switch_feedback"
 
-MAX_FRAMES = 10
+MAX_FRAMES = 4
 MIN_DETECTION_RATE = 0.7
 MIN_IOU = 0.8
 MAX_STOP_TIME = 20 # seconds
 MIN_MOVING_TIME = 5 # seconds
-MIN_DISTANCE = 0.205 + 0.095 # m (максимальное расстояние по оси x от начала координат base_footprint frame до границы footprint) + (расстояние в качестве небольшого запаса)
+# максимальное расстояние от центра системы координат base_footprint до границы footprint {
+if IS_TURTLEBOT3:
+	MAX_TO_FOOTPRINT = 0.205 # m (turtlebot3)
+else:
+	MAX_TO_FOOTPRINT = 0.3 # m (engineer)
+# }
+MIN_DISTANCE = MAX_TO_FOOTPRINT + 0.01 # m (прибавлено расстояние в качестве небольшого запаса)
 
 goal_det_pub = rospy.Publisher(GOAL_DET_TOPIC, DetArray, queue_size=1)
+norm_depth_map_pub = rospy.Publisher(NORM_DEPTH_MAP_TOPIC, Image, queue_size=1)
 
 stereo_mode_client = rospy.ServiceProxy(STEREO_MODE_SRV, StereoMode)
 search_mode_switch_client = rospy.ServiceProxy(SEARCH_MODE_SWITCH_SRV, ModeSwitch)
 rescue_mode_switch_client = rospy.ServiceProxy(RESCUE_MODE_SWITCH_SRV, RescueModeSwitch)
 
-cv_bridge = CvBridge() # delete
+cv_bridge = CvBridge()
 is_on = False
 is_on_search = False
 is_on_rescue = False
@@ -54,7 +64,7 @@ def reset_fields():
 	detection_history = []
 	is_min_moving = False
 	start_time = 0
-	print("reseted_fields")
+	rospy.loginfo("reseted_fields")
 
 
 def calculate_iou(box1, box2):
@@ -82,9 +92,9 @@ def calculate_iou(box1, box2):
 def fit_detection_history(msg_dets):
 	global detection_history
 
-	print("===fit_detection_history===")
+	# rospy.loginfo("===fit_detection_history===")
 	old_len_detection_history = len(detection_history) # чтобы не делать лишние последние итерации в цикле
-	print("old_len_detection_history =", old_len_detection_history)
+	# rospy.loginfo(f"old_len_detection_history: {old_len_detection_history}")
 	for msg_det in msg_dets:
 		for i in range(old_len_detection_history):
 			last_non_none_det = next((det for det in reversed(detection_history[i]) if det is not None), None)
@@ -115,7 +125,7 @@ def fit_detection_history(msg_dets):
 def get_goal_det():
 	global detection_history
 
-	print("===get_goal_det===")
+	# rospy.loginfo("===get_goal_det===")
 	max_history_id = -1
 	max_detection_rate = MIN_DETECTION_RATE
 	max_class_id = -1
@@ -123,10 +133,9 @@ def get_goal_det():
 	for hist_id, history in enumerate(detection_history):
 		# если данные еще не накопились в полном объеме
 		if len(history) != MAX_FRAMES:
-			print("данные еще не накопились в полном объеме")
+			# rospy.loginfo("данные еще не накопились в полном объеме")
 			continue
-		# ----------------------------------------------------------------- step 1
-		print("----------------------------------------------------------------- step 1")
+		# rospy.loginfo("----------------------------------------------------------------- step 1")
 		tmp_rates = [0, 0, 0, 0] # foot, head, hand, person
 		for det in history:
 			if det is None:
@@ -136,13 +145,12 @@ def get_goal_det():
 			tmp_rates[cls_id] /= len(history)
 		tmp_rate = max(tmp_rates)
 		if tmp_rate < max_detection_rate:
-			print("коэффициент обнаружения объекта класса оказался меньше необходимого порога {")
-			print("tmp_rate", tmp_rate)
-			print("tmp_class_id", tmp_rates.index(tmp_rate))
-			print("}")
+			# rospy.loginfo("коэффициент обнаружения объекта класса оказался меньше необходимого порога {")
+			# rospy.loginfo(f"tmp_rate: {tmp_rate}")
+			# rospy.loginfo(f"tmp_class_id: {tmp_rates.index(tmp_rate)}")
+			# rospy.loginfo("}")
 			continue
-		# ----------------------------------------------------------------- step 2
-		print("----------------------------------------------------------------- step 2")
+		# rospy.loginfo("----------------------------------------------------------------- step 2")
 		tmp_class_id = tmp_rates.index(tmp_rate)
 		count = 0
 		tmp_avg_conf = 0
@@ -152,28 +160,27 @@ def get_goal_det():
 			count += 1
 			tmp_avg_conf += det.msg_det.confidence
 		tmp_avg_conf /= count
-		print("tmp_class_id", tmp_class_id)
-		print("count", count)
-		print("tmp_avg_conf", tmp_avg_conf)
+		# rospy.loginfo(f"tmp_class_id: {tmp_class_id}")
+		# rospy.loginfo(f"count: {count}")
+		# rospy.loginfo(f"tmp_avg_conf: {tmp_avg_conf}")
 		if tmp_rate == max_detection_rate:
-			print("tmp_rate == max_detection_rate")
+			# rospy.loginfo("tmp_rate == max_detection_rate")
 			if tmp_avg_conf <= max_avg_conf:
-				print("tmp_avg_conf <= max_avg_conf")
+				# rospy.loginfo("tmp_avg_conf <= max_avg_conf")
 				continue
 		max_history_id = hist_id
 		max_detection_rate = tmp_rate
 		max_class_id = tmp_class_id
 		max_avg_conf = tmp_avg_conf
-		print("max_history_id", max_history_id)
-		print("max_detection_rate", max_detection_rate)
-		print("max_class_id", max_class_id)
-		print("max_avg_conf", max_avg_conf)
+		# rospy.loginfo(f"max_history_id: {max_history_id}")
+		# rospy.loginfo(f"max_detection_rate: {max_detection_rate}")
+		# rospy.loginfo(f"max_class_id: {max_class_id}")
+		# rospy.loginfo(f"max_avg_conf: {max_avg_conf}")
 	# если не накопилось достаточно данных или все коэффициенты обнаружений объектов классов оказались меньше необходимого порога
 	if max_class_id == -1:
-		print("не накопилось достаточно данных или все коэффициенты обнаружений объектов классов оказались меньше необходимого порога")
+		# rospy.loginfo("не накопилось достаточно данных или все коэффициенты обнаружений объектов классов оказались меньше необходимого порога")
 		return None
-	# --------------------------------------------------------------------- step 3
-	print("----------------------------------------------------------------- step 3")
+	rospy.loginfo("----------------------------------------------------------------- step 3")
 	# иначе сформировать наилучшее получившееся обнаружение объекта класса
 	count = 0
 	x = 0
@@ -192,18 +199,18 @@ def get_goal_det():
 	y /= count
 	w /= count
 	h /= count
-	print("x", x)
-	print("y", y)
-	print("w", w)
-	print("h", h)
-	print("max_class_id", max_class_id)
-	print("max_avg_conf", max_avg_conf)
+	rospy.loginfo(f"x: {x}")
+	rospy.loginfo(f"y: {y}")
+	rospy.loginfo(f"w: {w}")
+	rospy.loginfo(f"h: {h}")
+	rospy.loginfo(f"max_class_id: {max_class_id}")
+	rospy.loginfo(f"max_avg_conf: {max_avg_conf}")
 	if x < 0:
 		x = 0
-		print("repeat x:", x)
+		rospy.loginfo(f"corrected x: {x}")
 	if y < 0:
 		y = 0
-		print("repeat y:", y)
+		rospy.loginfo(f"corrected y: {y}")
 	return [int(x), int(y), int(w), int(h), float(max_avg_conf), int(max_class_id)]
 
 
@@ -212,7 +219,7 @@ def start_stereo_rescue_modes(goal_det, msg_img, msg_disp_img):
 	global is_on_rescue
 	global start_time
 
-	print("===start_stereo_rescue_modes===")
+	rospy.loginfo("===start_stereo_rescue_modes===")
 	msg_box = Box()
 
 	msg_box.x = goal_det[0]
@@ -225,19 +232,20 @@ def start_stereo_rescue_modes(goal_det, msg_img, msg_disp_img):
 		distance = -1
 	run_goal_det_pub(msg_box, goal_det[4], goal_det[5], msg_img, distance)
 	rospy.loginfo(f"distance: {distance}")
+	rospy.loginfo(f"distance - MIN_DISTANCE: {distance - MIN_DISTANCE}")
 	if distance != -1 and distance != 0 and distance - MIN_DISTANCE > 0:
-		print("включить rescue_mode через сервис")
+		rospy.loginfo("включить rescue_mode через сервис")
 		call_rescue_mode_switch(True, int(msg_box.x + msg_box.w / 2), int(msg_disp_img.image.width / 2), distance - MIN_DISTANCE, msg_disp_img.f)
 		if is_on_rescue:
 			start_time = time.time() # нужно для подстраховки на случай того, если rescue_mode не уведомит о завершении своей работы по каким-либо техническим причинам
 			return
 	reset_fields()
-	print("4444444444444444444 включить search_mode через сервис")
+	rospy.loginfo("4444444444444444444 включить search_mode через сервис")
 	call_search_mode_switch(True)
 
 
 def run_goal_det_pub(msg_box, confidence, class_id, msg_img, distance):
-	print("===run_goal_det_pub===")
+	rospy.loginfo("===run_goal_det_pub===")
 	msg = DetArray()
 	msg_det = Det()
 
@@ -249,6 +257,14 @@ def run_goal_det_pub(msg_box, confidence, class_id, msg_img, distance):
 	msg.img = msg_img
 	msg.distance = distance
 	goal_det_pub.publish(msg)
+
+
+def run_norm_depth_map_pub(msg):
+	disp_img_image = cv_bridge.imgmsg_to_cv2(msg.disp_img.image, desired_encoding="32FC1")
+	depth_map = np.where(disp_img_image >= msg.disp_img.min_disparity, msg.disp_img.f * msg.disp_img.T / disp_img_image, 0)
+	max_distance = msg.disp_img.f * msg.disp_img.T / msg.disp_img.min_disparity # msg.disp_img.min_disparity должен быть >= 1
+	norm_depth_map = (255 * depth_map / max_distance).astype(np.uint8)
+	norm_depth_map_pub.publish(cv_bridge.cv2_to_imgmsg(norm_depth_map, "mono8"))
 
 
 def det_array_callback(msg):
@@ -263,51 +279,35 @@ def det_array_callback(msg):
 		return
 	if is_on_rescue:
 		if time.time() - start_time >= 1000: # нужно для подстраховки на случай того, если rescue_mode не уведомит о завершении своей работы по каким-либо техническим причинам
-			print("2222 выключить rescue_mode через сервис")
+			rospy.loginfo("2222 выключить rescue_mode через сервис")
 			call_rescue_mode_switch(False, 0, 0, 0, 0)
 			reset_fields()
-			print("after 1000 seconds")
-			print("3333333333333333333 включить search_mode через сервис")
+			rospy.loginfo("after 1000 seconds")
+			rospy.loginfo("3333333333333333333 включить search_mode через сервис")
 			call_search_mode_switch(True)
 		else:
 			return
 	elif is_min_moving:
 		if time.time() - start_time >= MIN_MOVING_TIME:
 			reset_fields()
-			print("after MIN_MOVING_TIME seconds")
+			rospy.loginfo("after MIN_MOVING_TIME seconds")
 		else:
 			return
 
-	# потом обязательно удалить {
-	# иначе будет серое байеризованное
-	img_bgr = cv_bridge.imgmsg_to_cv2(msg.img, desired_encoding="bgr8")
-	# иначе будет bgr (если запускать на Инженере (иначе - закомментить)). И намного хуже будет распознавать нейронка
-	# img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-	# если запускать на своем ноутбуке (иначе - закомментить)
-	img_rgb = img_bgr
-	cv2.imshow(NODE_NAME, img_rgb)
-	# потом обязательно удалить {
+	# если будут наблюдаться проблемы с производительностью, то можно закомментировать
 	if msg.disp_img.f != -1:
-		disp_img_image = cv_bridge.imgmsg_to_cv2(msg.disp_img.image, desired_encoding="32FC1")
-		# msg.disp_img.min_disparity должен быть >= 1
-		depth_map = np.where(disp_img_image >= msg.disp_img.min_disparity, msg.disp_img.f * msg.disp_img.T / disp_img_image, 0)
-		max_distance = msg.disp_img.f * msg.disp_img.T / msg.disp_img.min_disparity
-		norm_depth_map = (255 * depth_map / max_distance).astype(np.uint8)
-		cv2.imshow(NODE_NAME + "_norm_depth_map", norm_depth_map)
-		# }
-	cv2.waitKey(1)
-	# }
+		run_norm_depth_map_pub(msg)
 
 	if not is_on_search:
 		if time.time() - start_time >= MAX_STOP_TIME:
-			print("222222222222222 включить search_mode через сервис")
+			rospy.loginfo("222222222222222 включить search_mode через сервис")
 			call_search_mode_switch(True)
 			if is_on_search: # нужно для того, чтобы иметь возможность подъехать к пострадавшему даже при отказе работы search_mode
 				is_min_moving = True
 				start_time = time.time()
 				return
 	elif len(msg.dets) != 0: # нужно как можно быстрее остановиться, когда робот кого-то увидел
-		print("выключить search_mode через сервис")
+		rospy.loginfo("выключить search_mode через сервис")
 		call_search_mode_switch(False)
 		start_time = time.time()
 	fit_detection_history(msg.dets)
@@ -316,7 +316,7 @@ def det_array_callback(msg):
 		start_stereo_rescue_modes(goal_det, msg.img, msg.disp_img)
 
 
-# переключаем режим "group_human_detection" (может в будущем переименовать, например, "autonomous_mode") во вкл/выкл состояние
+# переключаем режим Autonomous Victim Search во вкл/выкл состояние
 def handle_det_group_mode_switch(req):
 	global is_on
 	global is_on_search
@@ -325,12 +325,12 @@ def handle_det_group_mode_switch(req):
 	is_on = req.is_on
 	if is_on: # первым делом при включении алгоритма обязательно нужно сбросить все переменные
 		reset_fields()
-		print("включить search_mode через сервис")
+		rospy.loginfo("включить search_mode через сервис")
 		call_search_mode_switch(True)
 	else:
-		print("2222222222222222 выключить search_mode через сервис")
+		rospy.loginfo("2222222222222222 выключить search_mode через сервис")
 		call_search_mode_switch(False)
-		print("выключить rescue_mode через сервис")
+		rospy.loginfo("выключить rescue_mode через сервис")
 		call_rescue_mode_switch(False, 0, 0, 0, 0)
 	return ModeSwitchResponse(0) # операция прошла успешно
 
@@ -347,7 +347,7 @@ def handle_rescue_mode_switch_feedback(req):
 
 
 def call_stereo_mode(msg_box, msg_disp_img):
-	print("===call_stereo_mode===")
+	rospy.loginfo("===call_stereo_mode===")
 	try:
 		res = stereo_mode_client(msg_box, msg_disp_img)
 		return res.distance

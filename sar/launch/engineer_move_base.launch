@@ -3,7 +3,6 @@
   <arg name="robot_namespace" default="engineer"/>
   <arg name="drive_version" default="v4"/>
   <arg name="map_file" default="$(find building_map)/maps/cleaned_map.yaml"/>
-  <arg name="open_rviz" default="true"/>
   <arg name="move_forward_only" default="false"/>
 
   <group ns="$(arg robot_namespace)">
@@ -129,9 +128,4 @@
 
   </group>
 
-  <!-- rviz -->
-  <group if="$(arg open_rviz)">
-    <include file="$(find engineer_description)/launch/run_multi_engineer_rviz.launch">
-	</include>
-  </group>
 </launch>

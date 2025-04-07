@@ -41,6 +41,8 @@ def search():
 	y_min = rospy.get_param("y_min")
 	y_max = rospy.get_param("y_max")
 	grid_step = rospy.get_param("grid_step") # шаг сетки
+	ptp_timeout = rospy.get_param("ptp_timeout")
+	returning_timeout = rospy.get_param("returning_timeout")
 	waypoints = generate_waypoints(x_min, x_max, y_min, y_max, grid_step)
 	last_idx = 1
 
@@ -51,11 +53,11 @@ def search():
 			continue
 		if last_idx < len(waypoints):
 			x, y = waypoints[last_idx]
-			timeout = rospy.Duration(20)
+			timeout = rospy.Duration(ptp_timeout)
 			rospy.loginfo(f"moving to: ({x}, {y})")
 		else:
 			x, y = waypoints[0]
-			timeout = rospy.Duration(180)
+			timeout = rospy.Duration(returning_timeout)
 			rospy.loginfo(f"returning to start point: ({x}, {y})")
 		rospy.loginfo(f"result from move_base: {call_action_move_base(x, y, timeout)}")
 		if is_on: # нужно для возобновления движения к точке, которое прервали

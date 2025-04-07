@@ -39,9 +39,13 @@ def get_victim_coordinates(robot_x, robot_y, theta, distance, alpha):
 def get_robot_pose():
 	global count
 
+	is_turtlebot3 = rospy.get_param("is_turtlebot3")
 	while True: # нужен для первого возможного некорректного вызова tf_buffer.lookup_transform
 		try:
-			trans = tf_buffer.lookup_transform("map", "wide_stereo_l_stereo_camera_frame", rospy.Time(0), rospy.Duration(1))
+			if is_turtlebot3:
+				trans = tf_buffer.lookup_transform("map", "wide_stereo_l_stereo_camera_frame", rospy.Time(0), rospy.Duration(1)) # (turtlebot3)
+			else:
+				trans = tf_buffer.lookup_transform("map", "left_camera_frame", rospy.Time(0), rospy.Duration(1)) # (engineer)
 			rospy.loginfo("transform found!")
 			x, y = trans.transform.translation.x, trans.transform.translation.y
 			quaternion = trans.transform.rotation
@@ -84,14 +88,14 @@ def rescue():
 		rospy.loginfo(f"alpha: {alpha}")
 		victim_x, victim_y = get_victim_coordinates(robot_x, robot_y, theta, distance, alpha)
 		rospy.loginfo(f"координаты пострадавшего: x={victim_x}, y={victim_y}")
-		timeout = rospy.Duration(180)
+		timeout = rospy.Duration(rospy.get_param("to_victim_timeout"))
 		rospy.loginfo(f"result from move_base: {call_action_move_base(victim_x, victim_y, timeout)}")
 		if x == -1: # если нода det_img_group_node сама выключила данный процесс, то ничего ждать не нужно
 			rospy.loginfo("rescue completed!")
 			return
-		rospy.loginfo("before victim rescue")
-		rospy.sleep(10) # время для спасения пострадавшего
-		rospy.loginfo("after victim rescue")
+		rospy.loginfo("before at_victim_timeout")
+		rospy.sleep(rospy.get_param("at_victim_timeout")) # время для спасения пострадавшего
+		rospy.loginfo("after at_victim_timeout")
 	is_on = False
 	call_rescue_mode_switch_feedback(is_on)
 	rospy.loginfo("rescue completed!")

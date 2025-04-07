@@ -1,0 +1,21 @@
+<launch>  
+	<node name="search_node" pkg="sar" type="search_node.py" output="screen">
+		<!-- meters -->
+		<param name="x_min" value="-4"/>
+		<param name="x_max" value="-3"/>
+		<param name="y_min" value="1"/>
+		<param name="y_max" value="4"/>
+		<param name="grid_step" value="1"/>
+		<!-- seconds -->
+		<param name="ptp_timeout" value="20"/>
+		<param name="returning_timeout" value="180"/>
+		<!-- <param name="/use_sim_time" value="true"/> -->
+	</node>
+
+	<node name="rescue_node" pkg="sar" type="rescue_node.py" output="screen">
+		<param name="is_turtlebot3" value="true"/>
+		<!-- seconds -->
+		<param name="to_victim_timeout" value="180"/>
+		<param name="at_victim_timeout" value="10"/>
+	</node>
+</launch>
