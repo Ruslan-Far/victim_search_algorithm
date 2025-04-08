@@ -28,22 +28,18 @@
 
 ### Sequence #3: Human Detection:
 
-*pay attention: you should set value of the constant `IS_LAPTOP` in file `hum_det/src/yolov10_node.h`*
-*for simulation: `true`*
-*for real: `false`*
+*pay attention: you should set value of the constant `IS_LAPTOP` in the file `hum_det/src/yolov10_node.h`: **for simulation**: `true`; **for real**: `false`*
 
-*pay attention: you should set correct model paths in the function `get_model_path` in file `hum_det/src/yolov10_node.h`*
+*pay attention: you should set correct model paths in the function `get_model_path` in the file `hum_det/src/yolov10_node.h`*
 
 - `rosrun hum_det yolov10_node`
 
 ### Sequence #4: Autonomous Victim Search:
 
-*pay attention: you should set value of the arg `is_turtlebot3` in the file `search_rescue.launch`*
-*for simulation: `true`*
-*for real: `false`*
+*pay attention: you should set value of the arg `is_turtlebot3` in the file `search_rescue.launch`: **for simulation**: `true`; **for real**: `false`*
 
-- for simulation: ROS Navigation Stack: `roslaunch sar turtlebot3_move_base.launch`
-- for real: ROS Navigation Stack: `roslaunch sar engineer_move_base.launch`
+- **for simulation**: ROS Navigation Stack: `roslaunch sar turtlebot3_move_base.launch`
+- **for real**: ROS Navigation Stack: `roslaunch sar engineer_move_base.launch`
 - `roslaunch sar search_rescue.launch`
 - `roslaunch hum_det avs_main.launch`
 
@@ -51,8 +47,8 @@
 
 ### Sequence #1: ROS Navigation Stack:
 
-- for simulation: `roslaunch sar turtlebot3_rviz.launch`
-- for real: `roslaunch sar engineer_rviz.launch`
+- **for simulation**: `roslaunch sar turtlebot3_rviz.launch`
+- **for real**: `roslaunch sar engineer_rviz.launch`
 
 ### Sequence #2: отобразите данный список ROS-топиков удобным для Вас способом:
 
