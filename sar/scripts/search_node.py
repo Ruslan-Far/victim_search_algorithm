@@ -5,6 +5,8 @@ from hum_det.srv import *
 import actionlib
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
+# в отчете и тексте по ВКР слово "search" заменено на "snake"
+
 NODE_NAME = "search_node"
 
 SEARCH_MODE_SWITCH_SRV = "/search_mode_switch"

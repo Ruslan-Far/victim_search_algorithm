@@ -10,6 +10,8 @@ import tf
 import tf.transformations
 import tf2_ros
 
+# в отчете и тексте по ВКР слово "rescue" заменено на "follow"
+
 NODE_NAME = "rescue_node"
 
 RESCUE_MODE_SWITCH_SRV = "/rescue_mode_switch"

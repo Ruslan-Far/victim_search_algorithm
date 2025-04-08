@@ -1,4 +1,4 @@
-<launch>  
+<launch>
 	<node name="search_node" pkg="sar" type="search_node.py" output="screen">
 		<!-- meters -->
 		<param name="x_min" value="-4"/>
@@ -11,8 +11,11 @@
 		<param name="returning_timeout" value="180"/>
 	</node>
 
+	<!-- если запуск алгоритма будет производиться на роботе Turtlebot3. Для робота Инженер необходимо поставить false -->
+	<arg name="is_turtlebot3" default="true"/>
+
 	<node name="rescue_node" pkg="sar" type="rescue_node.py" output="screen">
-		<param name="is_turtlebot3" value="true"/> <!-- если запуск алгоритма будет производиться на роботе Turtlebot3. Для робота Инженер необходимо поставить false -->
+		<param name="is_turtlebot3" value="$(arg is_turtlebot3)"/>
 		<!-- meters -->
 		<param name="small_dist_reserve" value="0.01"/> <!-- расстояние в качестве небольшого запаса -->
 		<!-- seconds -->
