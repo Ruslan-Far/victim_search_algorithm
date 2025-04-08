@@ -7,9 +7,9 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
 NODE_NAME = "search_node"
 
-SEARCH_MODE_SWITCH_SRV = "search_mode_switch"
+SEARCH_MODE_SWITCH_SRV = "/search_mode_switch"
 
-MOVE_BASE_ACTION = "move_base"
+MOVE_BASE_ACTION = "/move_base"
 
 move_base_action_client = actionlib.SimpleActionClient(MOVE_BASE_ACTION, MoveBaseAction)
 
@@ -40,7 +40,7 @@ def search():
 	x_max = rospy.get_param("x_max")
 	y_min = rospy.get_param("y_min")
 	y_max = rospy.get_param("y_max")
-	grid_step = rospy.get_param("grid_step") # шаг сетки
+	grid_step = rospy.get_param("grid_step")
 	ptp_timeout = rospy.get_param("ptp_timeout")
 	returning_timeout = rospy.get_param("returning_timeout")
 	waypoints = generate_waypoints(x_min, x_max, y_min, y_max, grid_step)

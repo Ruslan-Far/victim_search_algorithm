@@ -1,4 +1,4 @@
-image: /home/ruslan/ros_detection_ws/src/building_map/maps/cleaned_map.pgm
+image: cleaned_map.pgm
 resolution: 0.050000
 origin: [-10.000000, -10.000000, 0.000000]
 negate: 0

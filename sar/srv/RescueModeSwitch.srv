@@ -1,7 +1,7 @@
 bool is_on
-int32 x
-int32 cx
-float32 distance
+int32 x_pixel
+int32 px_pixel
+float32 z
 float32 f
 ---
 int32 code

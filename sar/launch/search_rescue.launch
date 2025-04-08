@@ -5,17 +5,18 @@
 		<param name="x_max" value="-3"/>
 		<param name="y_min" value="1"/>
 		<param name="y_max" value="4"/>
-		<param name="grid_step" value="1"/>
+		<param name="grid_step" value="1"/> <!-- шаг сетки построенной карты-->
 		<!-- seconds -->
 		<param name="ptp_timeout" value="20"/>
 		<param name="returning_timeout" value="180"/>
-		<!-- <param name="/use_sim_time" value="true"/> -->
 	</node>
 
 	<node name="rescue_node" pkg="sar" type="rescue_node.py" output="screen">
-		<param name="is_turtlebot3" value="true"/>
+		<param name="is_turtlebot3" value="true"/> <!-- если запуск алгоритма будет производиться на роботе Turtlebot3. Для робота Инженер необходимо поставить false -->
+		<!-- meters -->
+		<param name="small_dist_reserve" value="0.01"/> <!-- расстояние в качестве небольшого запаса -->
 		<!-- seconds -->
-		<param name="to_victim_timeout" value="180"/>
-		<param name="at_victim_timeout" value="10"/>
+		<param name="to_victim_timeout" value="180"/> <!-- верхний предел времени для приближения к пострадавшему -->
+		<param name="at_victim_timeout" value="10"/> <!-- время остановки после приближения к пострадавшему -->
 	</node>
 </launch>

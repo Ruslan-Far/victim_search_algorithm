@@ -19,11 +19,8 @@
 const bool IS_LAPTOP = true; // если запуск алгоритма будет производиться на ноутбуке. Для робота Инженер необходимо поставить false
 
 std::string get_camera_img_topic() {
-    if (IS_LAPTOP) {
-		// return "/narrow_stereo_textured/left/image_rect_color";
-        // return "/wide_stereo/left/image_raw";
-		return "/usb_cam_node/image_raw";
-	}
+    if (IS_LAPTOP)
+        return "/wide_stereo/left/image_raw";
     else
         return "/stereo/left/image_raw";
 }

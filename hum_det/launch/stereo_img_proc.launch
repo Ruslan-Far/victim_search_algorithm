@@ -1,5 +1,4 @@
 <launch>
-	<!-- <group ns="narrow_stereo_textured"> -->
 	<group ns="wide_stereo">
 		<node name="stereo_image_proc" pkg="stereo_image_proc" type="stereo_image_proc" output="screen">
 			<param name="min_disparity" value="10"/> <!-- должен быть >= 1 -->
@@ -7,7 +6,6 @@
 			<param name="speckle_size" value="1000"/>
 			<!-- если есть проблемы с производительностью -->
 			<param name="_approximate_sync" value="true"/>
-			<!-- <param name="queue_size" value="20"/> -->
 		</node>
 	</group>
 </launch>

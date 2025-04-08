@@ -6,14 +6,14 @@
 
 namespace yolo {
 Inference::Inference(const std::string &model_path, const float &model_confidence_threshold, const float &model_nms_threshold) {
-	model_input_shape_ = cv::Size(640, 640); // Set the default size for models with dynamic shapes to prevent errors.
+	model_input_shape_ = cv::Size(640, 640); // set the default size for models with dynamic shapes to prevent errors
 	model_confidence_threshold_ = model_confidence_threshold;
 	model_nms_threshold_ = model_nms_threshold;
 	InitialModel(model_path);
 }
 
 
-// If the model has dynamic shapes, we need to set the input shape.
+// if the model has dynamic shapes, we need to set the input shape
 Inference::Inference(const std::string &model_path, const cv::Size model_input_shape, const float &model_confidence_threshold) {
 	model_input_shape_ = model_input_shape;
 	model_confidence_threshold_ = model_confidence_threshold;
@@ -115,7 +115,7 @@ void Inference::PostProcessing() {
 			class_ids.push_back(static_cast<const short>(detections[index + 5]));
 		}
 	}
-	// NMS
+	// NMS {
 	std::vector<int> idxs;
 	cv::dnn::NMSBoxes(boxes, confidences, model_confidence_threshold_, model_nms_threshold_, idxs);
 	for (size_t i = 0; i < idxs.size(); i++) {
@@ -126,7 +126,7 @@ void Inference::PostProcessing() {
 		result.class_id = class_ids[idx];
 		detections_.push_back(result);
 	}
-	// NMS
+	// }
 }
 
 

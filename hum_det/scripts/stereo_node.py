@@ -8,9 +8,11 @@ from sensor_msgs.msg import Image
 
 NODE_NAME = "stereo_node"
 
-STEREO_MODE_SRV = "stereo_mode"
+NORM_DEPTH_MAP_TOPIC = "/depth_map_roi"
 
-norm_depth_map_pub = rospy.Publisher("/depth_map_roi", Image, queue_size=1)
+STEREO_MODE_SRV = "/stereo_mode"
+
+norm_depth_map_pub = rospy.Publisher(NORM_DEPTH_MAP_TOPIC, Image, queue_size=1)
 
 cv_bridge = CvBridge()
 

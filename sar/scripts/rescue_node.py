@@ -12,46 +12,50 @@ import tf2_ros
 
 NODE_NAME = "rescue_node"
 
-RESCUE_MODE_SWITCH_SRV = "rescue_mode_switch"
-RESCUE_MODE_SWITCH_FEEDBACK_SRV = "rescue_mode_switch_feedback"
+RESCUE_MODE_SWITCH_SRV = "/rescue_mode_switch"
+RESCUE_MODE_SWITCH_FEEDBACK_SRV = "/rescue_mode_switch_feedback"
 
-MOVE_BASE_ACTION = "move_base"
+MOVE_BASE_ACTION = "/move_base"
 
 rescue_mode_switch_feedback_client = rospy.ServiceProxy(RESCUE_MODE_SWITCH_FEEDBACK_SRV, ModeSwitch)
 
 move_base_action_client = actionlib.SimpleActionClient(MOVE_BASE_ACTION, MoveBaseAction)
 
 is_on = False
-x = 0
-cx = 0
-distance = 0
+x_pixel = 0
+px_pixel = 0
+z = 0
 f = 0
 tf_buffer = tf2_ros.Buffer()
 count = 0 # нужен для первого возможного некорректного вызова tf_buffer.lookup_transform
 
 
-def get_victim_coordinates(robot_x, robot_y, theta, distance, alpha):
-	victim_x = robot_x + distance * math.cos(theta + alpha)
-	victim_y = robot_y + distance * math.sin(theta + alpha)
-	return victim_x, victim_y
+def get_x(x_pixel, px_pixel, z, f): # расчет смещения по оси X изначального фрейма левой камеры стереопары робота
+	return (px_pixel - x_pixel) * z / f
 
 
-def get_robot_pose():
+def get_d(x, z): # расчет Евклидова расстояния до объекта
+	return math.sqrt(x ** 2 + z ** 2)
+
+
+def get_alpha(x, z): # расчет угла отклонения объекта от главной оси камеры
+	return math.atan(x / z)
+
+
+def get_camera_pose():
 	global count
 
-	is_turtlebot3 = rospy.get_param("is_turtlebot3")
 	while True: # нужен для первого возможного некорректного вызова tf_buffer.lookup_transform
 		try:
-			if is_turtlebot3:
-				trans = tf_buffer.lookup_transform("map", "wide_stereo_l_stereo_camera_frame", rospy.Time(0), rospy.Duration(1)) # (turtlebot3)
+			if IS_TURTLEBOT3:
+				trans = tf_buffer.lookup_transform("map", "wide_stereo_l_stereo_camera_frame", rospy.Time(0), rospy.Duration(1)) # turtlebot3
 			else:
-				trans = tf_buffer.lookup_transform("map", "left_camera_frame", rospy.Time(0), rospy.Duration(1)) # (engineer)
+				trans = tf_buffer.lookup_transform("map", "left_camera_frame", rospy.Time(0), rospy.Duration(1)) # engineer
 			rospy.loginfo("transform found!")
 			x, y = trans.transform.translation.x, trans.transform.translation.y
 			quaternion = trans.transform.rotation
 			euler = tf.transformations.euler_from_quaternion([quaternion.x, quaternion.y, quaternion.z, quaternion.w])
 			theta = euler[2]
-			rospy.loginfo(f"theta in degrees: {math.degrees(theta)}")
 			return x, y, theta
 		except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
 			rospy.logerr("transform not found: %s", str(e))
@@ -62,40 +66,53 @@ def get_robot_pose():
 			return None
 
 
-def get_alpha(x, cx, distance, f):
-	horizontal_offset_x = (cx - x) * distance / f
-	rospy.loginfo(f"horizontal_offset_x: {horizontal_offset_x}")
-	alpha = math.atan(horizontal_offset_x / distance)
-	rospy.loginfo(f"alpha in degrees: {math.degrees(alpha)}")
-	return alpha
+def get_victim_coordinates(x_camera, y_camera, theta, d, alpha):
+	x_victim = x_camera + d * math.cos(theta + alpha)
+	y_victim = y_camera + d * math.sin(theta + alpha)
+	return x_victim, y_victim
 
 
 def rescue():
 	global is_on
-	global x
-	global cx
-	global distance
+	global x_pixel
+	global px_pixel
+	global z
 	global f
 
 	if not is_on:
 		return
 
-	pose = get_robot_pose()
-	if pose:
-		robot_x, robot_y, theta = pose
-		rospy.loginfo(f"робот находится в координатах: x={robot_x}, y={robot_y}, theta={theta}")
-		alpha = get_alpha(x, cx, distance, f)
-		rospy.loginfo(f"alpha: {alpha}")
-		victim_x, victim_y = get_victim_coordinates(robot_x, robot_y, theta, distance, alpha)
-		rospy.loginfo(f"координаты пострадавшего: x={victim_x}, y={victim_y}")
-		timeout = rospy.Duration(rospy.get_param("to_victim_timeout"))
-		rospy.loginfo(f"result from move_base: {call_action_move_base(victim_x, victim_y, timeout)}")
-		if x == -1: # если нода det_img_group_node сама выключила данный процесс, то ничего ждать не нужно
-			rospy.loginfo("rescue completed!")
-			return
-		rospy.loginfo("before at_victim_timeout")
-		rospy.sleep(rospy.get_param("at_victim_timeout")) # время для спасения пострадавшего
-		rospy.loginfo("after at_victim_timeout")
+	x = get_x(x_pixel, px_pixel, z, f)
+	rospy.loginfo(f"x: {x}")
+	d = get_d(x, z)
+	rospy.loginfo(f"d: {d}")
+	# максимальное расстояние от центра системы координат base_footprint до границы footprint {
+	if IS_TURTLEBOT3:
+		max_to_footprint = 0.205 # m (turtlebot3)
+	else:
+		max_to_footprint = 0.3 # m (engineer)
+	# }
+	d = d - max_to_footprint - SMALL_DIST_RESERVE
+	rospy.loginfo(f"d - {max_to_footprint} - {SMALL_DIST_RESERVE}: {d}")
+	if d > 0:
+		pose = get_camera_pose()
+		if pose:
+			x_camera, y_camera, theta = pose
+			rospy.loginfo(f"левая камера стереопары робота находится в координатах: x={x_camera}, y={y_camera}, theta={theta}")
+			rospy.loginfo(f"theta in degrees: {math.degrees(theta)}")
+			alpha = get_alpha(x, z)
+			rospy.loginfo(f"alpha: {alpha}")
+			rospy.loginfo(f"alpha in degrees: {math.degrees(alpha)}")
+			x_victim, y_victim = get_victim_coordinates(x_camera, y_camera, theta, d, alpha)
+			rospy.loginfo(f"координаты пострадавшего: x={x_victim}, y={y_victim}")
+			timeout = rospy.Duration(TO_VICTIM_TIMEOUT)
+			rospy.loginfo(f"result from move_base: {call_action_move_base(x_victim, y_victim, timeout)}")
+			if x_pixel == -1: # если нода det_img_group_node сама выключила данный процесс, то ничего ждать не нужно
+				rospy.loginfo("rescue completed!")
+				return
+			rospy.loginfo("before at_victim_timeout")
+			rospy.sleep(AT_VICTIM_TIMEOUT)
+			rospy.loginfo("after at_victim_timeout")
 	is_on = False
 	call_rescue_mode_switch_feedback(is_on)
 	rospy.loginfo("rescue completed!")
@@ -103,21 +120,21 @@ def rescue():
 
 def handle_rescue_mode_switch(req):
 	global is_on
-	global x
-	global cx
-	global distance
+	global x_pixel
+	global px_pixel
+	global z
 	global f
 
 	rospy.loginfo("===handle_rescue_mode_switch===")
 	is_on = req.is_on
 	rospy.loginfo(f"is_on: {is_on}")
 	if not is_on:
-		x = -1 # нужно для того, чтобы не уведомлять о выключении ноду det_img_group_node
+		x_pixel = -1 # нужно для того, чтобы не уведомлять о выключении ноду det_img_group_node
 		move_base_action_client.cancel_goal()
 	else:
-		x = req.x
-		cx = req.cx
-		distance = req.distance
+		x_pixel = req.x_pixel
+		px_pixel = req.px_pixel
+		z = req.z
 		f = req.f
 	return RescueModeSwitchResponse(0) # операция прошла успешно
 
@@ -148,6 +165,10 @@ def call_action_move_base(x, y, timeout):
 if __name__ == '__main__':
 	try:
 		rospy.init_node(NODE_NAME)
+		IS_TURTLEBOT3 = rospy.get_param("is_turtlebot3")
+		SMALL_DIST_RESERVE = rospy.get_param("small_dist_reserve")
+		TO_VICTIM_TIMEOUT = rospy.get_param("to_victim_timeout")
+		AT_VICTIM_TIMEOUT = rospy.get_param("at_victim_timeout")
 
 		rescue_mode_switch_server = rospy.Service(RESCUE_MODE_SWITCH_SRV, RescueModeSwitch, handle_rescue_mode_switch)
 

@@ -38,26 +38,6 @@ void DrawDetectedObject(cv::Mat &frame, const std::vector<yolo::Detection> &dete
 		else if (text_box_y + text_box_height > frame.rows)
 			text_box_y += frame.rows - (text_box_y + text_box_height);
 
-		// первоначальная версия с жесткими ограничениями. Если что, то можно удалить
-		// int x = 0;
-		// int y = 0;
-		// if (box.x - 2 < 0 && box.y - 27 < 0) {
-		// 	x = box.x;
-		// 	y = box.y;
-		// }
-		// else if (box.x - 2 < 0 && box.y - 27 > 0) {
-		// 	x = box.x;
-		// 	y = box.y - 27;
-		// }
-		// else if (box.x - 2 > 0 && box.y - 27 < 0) {
-		// 	x = box.x - 2;
-		// 	y = box.y;
-		// }
-		// else {
-		// 	x = box.x - 2;
-		// 	y = box.y - 27;
-		// }
-
 		const cv::Rect text_box(text_box_x, text_box_y, text_box_width, text_box_height);
 
 		cv::rectangle(frame, text_box, COLORS[class_id], cv::FILLED);

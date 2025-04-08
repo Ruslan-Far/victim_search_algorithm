@@ -13,8 +13,6 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from det_class import DetClass
 
-IS_TURTLEBOT3 = True # если запуск алгоритма будет производиться на роботе Turtlebot3. Для робота Инженер необходимо поставить False
-
 NODE_NAME = "det_img_group_node"
 
 DET_ARRAY_TOPIC = "/det_array"
@@ -32,13 +30,6 @@ MIN_DETECTION_RATE = 0.7
 MIN_IOU = 0.8
 MAX_STOP_TIME = 20 # seconds
 MIN_MOVING_TIME = 5 # seconds
-# максимальное расстояние от центра системы координат base_footprint до границы footprint {
-if IS_TURTLEBOT3:
-	MAX_TO_FOOTPRINT = 0.205 # m (turtlebot3)
-else:
-	MAX_TO_FOOTPRINT = 0.3 # m (engineer)
-# }
-MIN_DISTANCE = MAX_TO_FOOTPRINT + 0.01 # m (прибавлено расстояние в качестве небольшого запаса)
 
 goal_det_pub = rospy.Publisher(GOAL_DET_TOPIC, DetArray, queue_size=1)
 norm_depth_map_pub = rospy.Publisher(NORM_DEPTH_MAP_TOPIC, Image, queue_size=1)
@@ -232,10 +223,9 @@ def start_stereo_rescue_modes(goal_det, msg_img, msg_disp_img):
 		distance = -1
 	run_goal_det_pub(msg_box, goal_det[4], goal_det[5], msg_img, distance)
 	rospy.loginfo(f"distance: {distance}")
-	rospy.loginfo(f"distance - MIN_DISTANCE: {distance - MIN_DISTANCE}")
-	if distance != -1 and distance != 0 and distance - MIN_DISTANCE > 0:
+	if distance != -1 and distance != 0:
 		rospy.loginfo("включить rescue_mode через сервис")
-		call_rescue_mode_switch(True, int(msg_box.x + msg_box.w / 2), int(msg_disp_img.image.width / 2), distance - MIN_DISTANCE, msg_disp_img.f)
+		call_rescue_mode_switch(True, int(msg_box.x + msg_box.w / 2), int(msg_disp_img.image.width / 2), distance, msg_disp_img.f)
 		if is_on_rescue:
 			start_time = time.time() # нужно для подстраховки на случай того, если rescue_mode не уведомит о завершении своей работы по каким-либо техническим причинам
 			return
