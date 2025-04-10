@@ -50,11 +50,9 @@
 - **for simulation**: `roslaunch sar turtlebot3_rviz.launch`
 - **for real**: `roslaunch sar engineer_rviz.launch`
 
-### Sequence #2: отобразите данный список ROS-топиков удобным для Вас способом:
+### Sequence #2: necessary ROS topics:
 
-- `/yolov10_node/stereo/left/det_image`
-- `/depth_map`
-- `/depth_map_roi`
+- `roslaunch hum_det img_view_rviz.launch`
 
 ## On and Off
 
