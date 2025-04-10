@@ -28,15 +28,15 @@
 
 ### Sequence #3: Human Detection:
 
-*pay attention: you should set value of the constant `IS_LAPTOP` in the file `hum_det/src/yolov10_node.h`: **for simulation**: `true`; **for real**: `false`*
+*pay attention: you should set value of the `IS_LAPTOP` constant in the `hum_det/src/yolov10_node.h` file: **for simulation**: `true`; **for real**: `false`*
 
-*pay attention: you should set correct model paths in the function `get_model_path` in the file `hum_det/src/yolov10_node.h`*
+*pay attention: you should set correct model paths in the `get_model_path` function in the `hum_det/src/yolov10_node.h` file*
 
 - `rosrun hum_det yolov10_node`
 
 ### Sequence #4: Autonomous Victim Search:
 
-*pay attention: you should set value of the arg `is_turtlebot3` in the file `search_rescue.launch`: **for simulation**: `true`; **for real**: `false`*
+*pay attention: you should set value of the `is_turtlebot3` arg in the `search_rescue.launch` file: **for simulation**: `true`; **for real**: `false`*
 
 - **for simulation**: ROS Navigation Stack: `roslaunch sar turtlebot3_move_base.launch`
 - **for real**: ROS Navigation Stack: `roslaunch sar engineer_move_base.launch`
@@ -52,9 +52,9 @@
 
 ### Sequence #2: отобразите данный список ROS-топиков удобным для Вас способом:
 
-1. `/yolov10_node/stereo/left/det_image`
-2. `/depth_map`
-3. `/depth_map_roi`
+- `/yolov10_node/stereo/left/det_image`
+- `/depth_map`
+- `/depth_map_roi`
 
 ## On and Off
 

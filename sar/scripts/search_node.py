@@ -38,19 +38,18 @@ def generate_waypoints(x_min, x_max, y_min, y_max, grid_step):
 def search():
 	global is_on
 	
-	x_min = rospy.get_param("x_min")
-	x_max = rospy.get_param("x_max")
-	y_min = rospy.get_param("y_min")
-	y_max = rospy.get_param("y_max")
-	grid_step = rospy.get_param("grid_step")
-	ptp_timeout = rospy.get_param("ptp_timeout")
-	returning_timeout = rospy.get_param("returning_timeout")
+	x_min = rospy.get_param(NODE_NAME + "/x_min")
+	x_max = rospy.get_param(NODE_NAME + "/x_max")
+	y_min = rospy.get_param(NODE_NAME + "/y_min")
+	y_max = rospy.get_param(NODE_NAME + "/y_max")
+	grid_step = rospy.get_param(NODE_NAME + "/grid_step")
+	ptp_timeout = rospy.get_param(NODE_NAME + "/ptp_timeout")
+	returning_timeout = rospy.get_param(NODE_NAME + "/returning_timeout")
 	waypoints = generate_waypoints(x_min, x_max, y_min, y_max, grid_step)
 	last_idx = 1
 
 	while last_idx <= len(waypoints):
 		if not is_on:
-			rospy.loginfo("search stopped due to victim detection!")
 			rospy.sleep(1)
 			continue
 		if last_idx < len(waypoints):

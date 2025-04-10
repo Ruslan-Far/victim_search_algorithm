@@ -52,7 +52,7 @@ def get_camera_pose():
 			if IS_TURTLEBOT3:
 				trans = tf_buffer.lookup_transform("map", "wide_stereo_l_stereo_camera_frame", rospy.Time(0), rospy.Duration(1)) # turtlebot3
 			else:
-				trans = tf_buffer.lookup_transform("map", "left_camera_frame", rospy.Time(0), rospy.Duration(1)) # engineer
+				trans = tf_buffer.lookup_transform("engineer/map", "engineer/camera3_link", rospy.Time(0), rospy.Duration(1)) # engineer
 			rospy.loginfo("transform found!")
 			x, y = trans.transform.translation.x, trans.transform.translation.y
 			quaternion = trans.transform.rotation
@@ -90,9 +90,9 @@ def rescue():
 	rospy.loginfo(f"d: {d}")
 	# максимальное расстояние от центра системы координат base_footprint до границы footprint {
 	if IS_TURTLEBOT3:
-		max_to_footprint = 0.205 # m (turtlebot3)
+		max_to_footprint = 0.257 # m (turtlebot3)
 	else:
-		max_to_footprint = 0.3 # m (engineer)
+		max_to_footprint = 0.4565 # m (engineer)
 	# }
 	d = d - max_to_footprint - SMALL_DIST_RESERVE
 	rospy.loginfo(f"d - {max_to_footprint} - {SMALL_DIST_RESERVE}: {d}")
@@ -167,10 +167,10 @@ def call_action_move_base(x, y, timeout):
 if __name__ == '__main__':
 	try:
 		rospy.init_node(NODE_NAME)
-		IS_TURTLEBOT3 = rospy.get_param("is_turtlebot3")
-		SMALL_DIST_RESERVE = rospy.get_param("small_dist_reserve")
-		TO_VICTIM_TIMEOUT = rospy.get_param("to_victim_timeout")
-		AT_VICTIM_TIMEOUT = rospy.get_param("at_victim_timeout")
+		IS_TURTLEBOT3 = rospy.get_param(NODE_NAME + "/is_turtlebot3")
+		SMALL_DIST_RESERVE = rospy.get_param(NODE_NAME + "/small_dist_reserve")
+		TO_VICTIM_TIMEOUT = rospy.get_param(NODE_NAME + "/to_victim_timeout")
+		AT_VICTIM_TIMEOUT = rospy.get_param(NODE_NAME + "/at_victim_timeout")
 
 		rescue_mode_switch_server = rospy.Service(RESCUE_MODE_SWITCH_SRV, RescueModeSwitch, handle_rescue_mode_switch)
 

@@ -1,0 +1,7 @@
+<launch>
+	<node pkg="image_view" type="image_view" name="view_camera1" output="screen" args="image:=/yolov10_node/stereo/left/det_image"/>
+
+	<node pkg="image_view" type="image_view" name="view_camera2" output="screen" args="image:=/depth_map"/>
+
+	<node pkg="image_view" type="image_view" name="view_camera3" output="screen" args="image:=/depth_map_roi"/>
+</launch>
