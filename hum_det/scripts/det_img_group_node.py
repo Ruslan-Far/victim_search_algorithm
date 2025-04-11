@@ -329,10 +329,11 @@ def handle_rescue_mode_switch_feedback(req):
 	global is_on_rescue
 
 	rospy.loginfo("===handle_rescue_mode_switch_feedback===")
-	is_on_rescue = req.is_on
-	reset_fields()
-	rospy.loginfo("555555555555555555555 включить search_mode через сервис")
-	call_search_mode_switch(True)
+	if is_on_rescue: # необходимо, так как может произойти повторное выключение rescue_mode. Это приведет к тому, что search_mode снова включится, в то время как он должен быть выключенным
+		is_on_rescue = req.is_on
+		reset_fields()
+		rospy.loginfo("555555555555555555555 включить search_mode через сервис")
+		call_search_mode_switch(True)
 	return ModeSwitchResponse(0) # операция прошла успешно
 
 

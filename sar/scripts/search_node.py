@@ -55,30 +55,30 @@ def search():
 		if last_idx < len(waypoints):
 			x, y = waypoints[last_idx]
 			timeout = rospy.Duration(ptp_timeout)
-			rospy.loginfo(f"moving to: ({x}, {y})")
+			rospy.loginfo(f"{NODE_NAME}: moving to: ({x}, {y})")
 		else:
 			x, y = waypoints[0]
 			timeout = rospy.Duration(returning_timeout)
-			rospy.loginfo(f"returning to start point: ({x}, {y})")
-		rospy.loginfo(f"result from move_base: {call_action_move_base(x, y, timeout)}")
+			rospy.loginfo(f"{NODE_NAME}: returning to start point: ({x}, {y})")
+		rospy.loginfo(f"{NODE_NAME}: result from move_base: {call_action_move_base(x, y, timeout)}")
 		if is_on: # нужно для возобновления движения к точке, которое прервали
 			last_idx += 1
-	rospy.loginfo("search completed!")
+	rospy.loginfo(f"{NODE_NAME}: search completed!")
 
 
 def handle_search_mode_switch(req):
 	global is_on
 
-	rospy.loginfo("===handle_search_mode_switch===")
+	rospy.loginfo(f"{NODE_NAME}: ===handle_search_mode_switch===")
 	is_on = req.is_on
-	rospy.loginfo(f"is_on: {is_on}")
+	rospy.loginfo(f"{NODE_NAME}: is_on: {is_on}")
 	if not is_on:
 		move_base_action_client.cancel_goal()
 	return ModeSwitchResponse(0) # операция прошла успешно
 
 
 def call_action_move_base(x, y, timeout):
-	rospy.loginfo("===call_action_move_base===")
+	rospy.loginfo(f"{NODE_NAME}: ===call_action_move_base===")
 	move_base_action_client.wait_for_server()
 	goal = MoveBaseGoal()
 	goal.target_pose.header.frame_id = "map"
@@ -99,4 +99,4 @@ if __name__ == '__main__':
 
 		search()
 	except rospy.ROSInterruptException:
-		rospy.loginfo("navigation interrupted")
+		rospy.loginfo(f"{NODE_NAME}: navigation interrupted")

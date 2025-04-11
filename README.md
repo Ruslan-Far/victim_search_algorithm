@@ -50,7 +50,7 @@
 - **for simulation**: `roslaunch sar turtlebot3_rviz.launch`
 - **for real**: `roslaunch sar engineer_rviz.launch`
 
-### Sequence #2: necessary ROS topics:
+### Sequence #2: necessary ROS image topics:
 
 - `roslaunch hum_det img_view_rviz.launch`
 

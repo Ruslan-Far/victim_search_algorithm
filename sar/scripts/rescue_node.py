@@ -53,16 +53,16 @@ def get_camera_pose():
 				trans = tf_buffer.lookup_transform("map", "wide_stereo_l_stereo_camera_frame", rospy.Time(0), rospy.Duration(1)) # turtlebot3
 			else:
 				trans = tf_buffer.lookup_transform("engineer/map", "engineer/camera3_link", rospy.Time(0), rospy.Duration(1)) # engineer
-			rospy.loginfo("transform found!")
+			rospy.loginfo(f"{NODE_NAME}: transform found!")
 			x, y = trans.transform.translation.x, trans.transform.translation.y
 			quaternion = trans.transform.rotation
 			euler = tf.transformations.euler_from_quaternion([quaternion.x, quaternion.y, quaternion.z, quaternion.w])
 			theta = euler[2]
 			return x, y, theta
 		except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-			rospy.logerr("transform not found: %s", str(e))
+			rospy.logerr(f"{NODE_NAME}: transform not found: %s", str(e))
 			if count == 0: # нужен для первого возможного некорректного вызова tf_buffer.lookup_transform
-				rospy.loginfo("repeat...")
+				rospy.loginfo(f"{NODE_NAME}: repeat...")
 				count += 1
 				continue
 			return None
@@ -85,9 +85,9 @@ def rescue():
 		return
 
 	x = get_x(x_pixel, px_pixel, z, f)
-	rospy.loginfo(f"x: {x}")
+	rospy.loginfo(f"{NODE_NAME}: x: {x}")
 	d = get_d(x, z)
-	rospy.loginfo(f"d: {d}")
+	rospy.loginfo(f"{NODE_NAME}: d: {d}")
 	# максимальное расстояние от центра системы координат base_footprint до границы footprint {
 	if IS_TURTLEBOT3:
 		max_to_footprint = 0.257 # m (turtlebot3)
@@ -95,29 +95,29 @@ def rescue():
 		max_to_footprint = 0.4565 # m (engineer)
 	# }
 	d = d - max_to_footprint - SMALL_DIST_RESERVE
-	rospy.loginfo(f"d - {max_to_footprint} - {SMALL_DIST_RESERVE}: {d}")
+	rospy.loginfo(f"{NODE_NAME}: d - {max_to_footprint} - {SMALL_DIST_RESERVE}: {d}")
 	if d > 0:
 		pose = get_camera_pose()
 		if pose:
 			x_camera, y_camera, theta = pose
-			rospy.loginfo(f"левая камера стереопары робота находится в координатах: x={x_camera}, y={y_camera}, theta={theta}")
-			rospy.loginfo(f"theta in degrees: {math.degrees(theta)}")
+			rospy.loginfo(f"{NODE_NAME}: левая камера стереопары робота находится в координатах: x={x_camera}, y={y_camera}, theta={theta}")
+			rospy.loginfo(f"{NODE_NAME}: theta in degrees: {math.degrees(theta)}")
 			alpha = get_alpha(x, z)
-			rospy.loginfo(f"alpha: {alpha}")
-			rospy.loginfo(f"alpha in degrees: {math.degrees(alpha)}")
+			rospy.loginfo(f"{NODE_NAME}: alpha: {alpha}")
+			rospy.loginfo(f"{NODE_NAME}: alpha in degrees: {math.degrees(alpha)}")
 			x_victim, y_victim = get_victim_coordinates(x_camera, y_camera, theta, d, alpha)
-			rospy.loginfo(f"координаты пострадавшего: x={x_victim}, y={y_victim}")
+			rospy.loginfo(f"{NODE_NAME}: координаты пострадавшего: x={x_victim}, y={y_victim}")
 			timeout = rospy.Duration(TO_VICTIM_TIMEOUT)
-			rospy.loginfo(f"result from move_base: {call_action_move_base(x_victim, y_victim, timeout)}")
+			rospy.loginfo(f"{NODE_NAME}: result from move_base: {call_action_move_base(x_victim, y_victim, timeout)}")
 			if x_pixel == -1: # если нода det_img_group_node сама выключила данный процесс, то ничего ждать не нужно
-				rospy.loginfo("rescue completed!")
+				rospy.loginfo(f"{NODE_NAME}: rescue completed!")
 				return
-			rospy.loginfo("before at_victim_timeout")
+			rospy.loginfo(f"{NODE_NAME}: before at_victim_timeout")
 			rospy.sleep(AT_VICTIM_TIMEOUT)
-			rospy.loginfo("after at_victim_timeout")
+			rospy.loginfo(f"{NODE_NAME}: after at_victim_timeout")
 	is_on = False
 	call_rescue_mode_switch_feedback(is_on)
-	rospy.loginfo("rescue completed!")
+	rospy.loginfo(f"{NODE_NAME}: rescue completed!")
 
 
 def handle_rescue_mode_switch(req):
@@ -127,9 +127,9 @@ def handle_rescue_mode_switch(req):
 	global z
 	global f
 
-	rospy.loginfo("===handle_rescue_mode_switch===")
+	rospy.loginfo(f"{NODE_NAME}: ===handle_rescue_mode_switch===")
 	is_on = req.is_on
-	rospy.loginfo(f"is_on: {is_on}")
+	rospy.loginfo(f"{NODE_NAME}: is_on: {is_on}")
 	if not is_on:
 		x_pixel = -1 # нужно для того, чтобы не уведомлять о выключении ноду det_img_group_node
 		move_base_action_client.cancel_goal()
@@ -142,16 +142,16 @@ def handle_rescue_mode_switch(req):
 
 
 def call_rescue_mode_switch_feedback(msg_is_on):
-	rospy.loginfo("===call_rescue_mode_switch_feedback===")
+	rospy.loginfo(f"{NODE_NAME}: ===call_rescue_mode_switch_feedback===")
 	try:
 		rospy.wait_for_service(RESCUE_MODE_SWITCH_FEEDBACK_SRV, rospy.Duration(5)) # чтобы не было deadlock
 		rescue_mode_switch_feedback_client(msg_is_on)
 	except (rospy.ServiceException, rospy.ROSException) as e:
-		rospy.logerr("error from rescue_mode_switch_feedback: %s" % e)
+		rospy.logerr(f"{NODE_NAME}: error from rescue_mode_switch_feedback: %s" % e)
 
 
 def call_action_move_base(x, y, timeout):
-	rospy.loginfo("===call_action_move_base===")
+	rospy.loginfo(f"{NODE_NAME}: ===call_action_move_base===")
 	move_base_action_client.wait_for_server()
 	goal = MoveBaseGoal()
 	goal.target_pose.header.frame_id = "map"
@@ -179,4 +179,4 @@ if __name__ == '__main__':
 			rescue()
 			rospy.sleep(1)
 	except rospy.ROSInterruptException:
-		rospy.loginfo("navigation interrupted")
+		rospy.loginfo(f"{NODE_NAME}: navigation interrupted")
