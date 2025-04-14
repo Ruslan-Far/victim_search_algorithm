@@ -45,7 +45,7 @@ def handle_stereo_mode(req):
 		mean_distance = np.mean(valid_pixels) # среднее значение
 		rospy.loginfo(f"{NODE_NAME}: медианная дистанция: {median_distance}")
 		rospy.loginfo(f"{NODE_NAME}: средняя дистанция: {mean_distance}")
-		distance = mean_distance
+		distance = median_distance
 	else:
 		rospy.loginfo(f"{NODE_NAME}: нет валидных пикселей в roi!")
 		distance = 0

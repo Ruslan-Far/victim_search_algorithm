@@ -25,6 +25,7 @@
 ### Sequence #2: for real:
 
 - stereo camera of engineer robot: `roslaunch hum_det engineer_stereo.launch`
+- lidar of engineer robot: `roslaunch engineer_laser_node udp_urg_lidar.launch`
 
 ### Sequence #3: Human Detection:
 
@@ -40,6 +41,8 @@
 
 - **for simulation**: ROS Navigation Stack: `roslaunch sar turtlebot3_move_base.launch`
 - **for real**: ROS Navigation Stack: `roslaunch sar engineer_move_base.launch`
+- **for real**: ROS Navigation Stack: `rosrun engineer_cmd_vel twist_control_node`
+- **for real**: ROS Navigation Stack: `roslaunch engineer_navigation_stack engineer_hector_remote.launch`
 - `roslaunch sar search_rescue.launch`
 - `roslaunch hum_det avs_main.launch`
 
@@ -49,6 +52,7 @@
 
 - **for simulation**: `roslaunch sar turtlebot3_rviz.launch`
 - **for real**: `roslaunch sar engineer_rviz.launch`
+- **for real**: `roslaunch engineer_navigation_stack view_navigation.launch`
 
 ### Sequence #2: necessary ROS image topics:
 
