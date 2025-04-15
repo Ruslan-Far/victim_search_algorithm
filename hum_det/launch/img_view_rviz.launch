@@ -1,4 +1,4 @@
 <launch>
-	<node name="rviz2" pkg="rviz" type="rviz" output="screen"
+	<node name="img_view_rviz" pkg="rviz" type="rviz" output="screen"
 			args="-d $(find hum_det)/rviz/three_imgs_vertical.rviz" />
 </launch>

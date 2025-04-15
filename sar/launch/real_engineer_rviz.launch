@@ -1,0 +1,4 @@
+<launch>
+	<node name="real_engineer_rviz" pkg="rviz" type="rviz" output="screen"
+			args="-d $(find sar)/rviz/real_engineer.rviz" />
+</launch>

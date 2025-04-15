@@ -32,7 +32,7 @@
                 <param name="camera_name" type="string" value="$(arg left_camera_name)"/>
                 <param name="device_name" type="string" value="$(arg left_device_name)"/>
                 <param name="fps" type="int" value="$(arg fps)"/>
-                <param name="frame_id" type="string" value="$(arg left_camera_name)_frame_id"/>
+                <param name="frame_id" type="string" value="$(arg left_camera_name)_camera_link"/>
                 <param name="camera_info_url" type="string" value="$(arg left_camera_info_url)"/>
                 <param name="width" type="int" value="$(arg width)"/>
                 <param name="height" type="int" value="$(arg height)"/>
@@ -49,7 +49,7 @@
                 <param name="camera_name" type="string" value="$(arg right_camera_name)"/>
                 <param name="device_name" type="string" value="$(arg right_device_name)"/>
                 <param name="fps" type="int" value="$(arg fps)"/>
-                <param name="frame_id" type="string" value="$(arg right_camera_name)_frame_id"/>
+                <param name="frame_id" type="string" value="$(arg right_camera_name)_camera_link"/>
                 <param name="camera_info_url" type="string" value="$(arg right_camera_info_url)"/>
                 <param name="width" type="int" value="$(arg width)"/>
                 <param name="height" type="int" value="$(arg height)"/>
@@ -77,5 +77,5 @@
 
     <!-- transform -->
     <node name="tf" pkg="tf" type="static_transform_publisher"
-          args="0 0 0 -1.5707963267948966 0 0 -1.5707963267948966 base_link $(arg left_camera_name)_frame_id 100"/>
+          args="-0.3 0.1 0 0 0 0 base_link $(arg left_camera_name)_camera_link 50"/>
 </launch>
