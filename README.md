@@ -8,7 +8,8 @@
 
 ## Dependencies
 
-- clone repo from `https://gitlab.com/lirs-kfu/engineer-gazebo-model.git` to your workspace and build it
+- clone repo from `https://gitlab.com/lirs-kfu/lirs-ros-video-streaming.git` to your workspace (on engineer robot) and build it
+- clone repo (`server` branch) from `https://gitlab.com/lirs-kfu/servosila-engineer-robot-motion.git` to your workspace (on engineer robot) and build it
 
 ## Build
 
@@ -25,7 +26,6 @@
 ### Sequence #2: for real:
 
 - stereo camera of engineer robot: `roslaunch hum_det engineer_stereo.launch`
-- lidar of engineer robot: `roslaunch engineer_laser_node udp_urg_lidar.launch`
 
 ### Sequence #3: Human Detection:
 
@@ -40,9 +40,8 @@
 *pay attention: you should set value of the `is_turtlebot3` arg in the `search_rescue.launch` file: **for simulation**: `true`; **for real**: `false`*
 
 - **for simulation**: ROS Navigation Stack: `roslaunch sar turtlebot3_move_base.launch`
-- **for real**: ROS Navigation Stack: `roslaunch sar engineer_move_base.launch`
 - **for real**: ROS Navigation Stack: `rosrun engineer_cmd_vel twist_control_node`
-- **for real**: ROS Navigation Stack: `roslaunch engineer_navigation_stack engineer_hector_remote.launch`
+- **for real**: ROS Navigation Stack: `roslaunch engineer_navigation_stack engineer_hector.launch`
 - `roslaunch sar search_rescue.launch`
 - `roslaunch hum_det avs_main.launch`
 
@@ -51,8 +50,7 @@
 ### Sequence #1: ROS Navigation Stack:
 
 - **for simulation**: `roslaunch sar turtlebot3_rviz.launch`
-- **for real**: `roslaunch sar engineer_rviz.launch`
-- **for real**: `roslaunch engineer_navigation_stack view_navigation.launch`
+- **for real**: `roslaunch sar real_engineer_rviz.launch`
 
 ### Sequence #2: necessary ROS image topics:
 
