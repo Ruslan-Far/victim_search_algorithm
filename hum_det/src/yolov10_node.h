@@ -20,9 +20,9 @@ const bool IS_LAPTOP = true; // если запуск алгоритма буд�
 
 std::string get_camera_img_topic() {
     if (IS_LAPTOP)
-        return "/wide_stereo/left/image_raw";
+        return "/wide_stereo/left/image_rect_color";
     else
-        return "/stereo/left/image_raw";
+        return "/stereo/left/image_rect_color";
 }
 
 std::string get_camera_disp_img_topic() {
@@ -33,10 +33,14 @@ std::string get_camera_disp_img_topic() {
 }
 
 std::string get_model_path() {
-    if (IS_LAPTOP)
-        return "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer6_ep0-20_yolov10s/best_openvino_conv_model/best.xml";
-    else
-        return "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer6_ep0-20_yolov10s/best_openvino_conv_model/best.xml";
+    if (IS_LAPTOP) {
+        // return "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer6_ep0-20_yolov10s/best_openvino_conv_model/best.xml";
+        return "/home/ruslan/kpfu/magistracy/ml_models/usar_engineer6_ep0-20_yolov10n/best_openvino_conv_model/best.xml";
+	}
+    else {
+        // return "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer6_ep0-20_yolov10s/best_openvino_conv_model/best.xml";
+        return "/home/lirs/ruslan/kpfu/magistracy/ml_models/usar_engineer6_ep0-20_yolov10n/best_openvino_conv_model/best.xml";
+	}
 }
 
 const std::string NODE_NAME = "yolov10_node";

@@ -52,7 +52,8 @@ def get_camera_pose():
 			if IS_TURTLEBOT3:
 				trans = tf_buffer.lookup_transform("map", "wide_stereo_l_stereo_camera_frame", rospy.Time(0), rospy.Duration(1)) # turtlebot3
 			else:
-				trans = tf_buffer.lookup_transform("engineer/map", "engineer/camera3_link", rospy.Time(0), rospy.Duration(1)) # engineer
+				# trans = tf_buffer.lookup_transform("engineer/map", "engineer/camera3_link", rospy.Time(0), rospy.Duration(1)) # sim_engineer
+				trans = tf_buffer.lookup_transform("map", "left_camera_link", rospy.Time(0), rospy.Duration(1)) # real_engineer
 			rospy.loginfo(f"{NODE_NAME}: transform found!")
 			x, y = trans.transform.translation.x, trans.transform.translation.y
 			quaternion = trans.transform.rotation
@@ -88,13 +89,13 @@ def rescue():
 	rospy.loginfo(f"{NODE_NAME}: x: {x}")
 	d = get_d(x, z)
 	rospy.loginfo(f"{NODE_NAME}: d: {d}")
-	# максимальное расстояние от центра системы координат base_footprint до границы footprint {
 	if IS_TURTLEBOT3:
-		max_to_footprint = 0.257 # m (turtlebot3)
+		dist_between_bf_lcl = 0.075 # m (turtlebot3) расстояние между центрами систем координат base_footprint и левой камеры стереопары. Знак определяется относительно оси X base_footprint
+		max_to_footprint = 0.257 # m (turtlebot3) максимальное расстояние от центра системы координат base_footprint до границы footprint
 	else:
-		max_to_footprint = 0.4565 # m (engineer)
-	# }
-	d = d - max_to_footprint - SMALL_DIST_RESERVE
+		dist_between_bf_lcl = -0.129 # m (engineer) расстояние между центрами систем координат base_footprint и левой камеры стереопары. Знак определяется относительно оси X base_footprint
+		max_to_footprint = 0.4565 # m (engineer) максимальное расстояние от центра системы координат base_footprint до границы footprint
+	d = d + dist_between_bf_lcl - max_to_footprint - SMALL_DIST_RESERVE
 	rospy.loginfo(f"{NODE_NAME}: d - {max_to_footprint} - {SMALL_DIST_RESERVE}: {d}")
 	if d > 0:
 		pose = get_camera_pose()
