@@ -1,25 +1,41 @@
 <launch>
-	<node name="search_node" pkg="sar" type="search_node.py" output="screen">
-		<!-- meters -->
+	<!-- если запуск алгоритма будет производиться в симуляции (робот Turtlebot3). Иначе для робота Инженер необходимо поставить false -->
+	<arg name="is_sim" default="true"/>
+
+	<arg name="coef_timeout" default="1.1"/> <!-- общий коэффициент времени -->
+
+	<group if="$(arg is_sim)">
+		<param name="map_frame" value="map"/>
+		<param name="base_frame" value="base_footprint"/>
+		<param name="left_camera_frame" value="wide_stereo_l_stereo_camera_frame"/>
+		<!-- <param name="map_frame" value="engineer/map"/> -->
+		<!-- <param name="base_frame" value="engineer/base_footprint"/> -->
+		<!-- <param name="left_camera_frame" value="engineer/camera3_link"/> -->
+		<param name="footprint_path" value="$(find turtlebot3_navigation)/param/costmap_common_params_waffle.yaml"/>
 		<param name="x_min" value="-4"/>
 		<param name="x_max" value="-3"/>
 		<param name="y_min" value="1"/>
 		<param name="y_max" value="4"/>
-		<param name="grid_step" value="1"/> <!-- шаг сетки построенной карты-->
-		<!-- seconds -->
-		<param name="ptp_timeout" value="20"/>
-		<param name="returning_timeout" value="180"/>
+	</group>
+	<group unless="$(arg is_sim)">
+		<param name="map_frame" value="map"/>
+		<param name="base_frame" value="base_link"/>
+		<param name="left_camera_frame" value="left_camera_link"/>
+		<param name="footprint_path" value="$(find engineer_navigation_stack)/config/costmap_common_params.yaml"/>
+		<param name="x_min" value="0"/>
+		<param name="x_max" value="2"/>
+		<param name="y_min" value="0"/>
+		<param name="y_max" value="2"/>
+	</group>
+
+	<node name="search_node" pkg="sar" type="search_node.py" output="screen">
+		<param name="coef_ptp_timeout" value="$(arg coef_timeout)"/> <!-- коэффициент времени для перемещения от точки к точке -->
+		<param name="grid_step" value="1"/> <!-- шаг сетки построенной карты -->
 	</node>
 
-	<!-- если запуск алгоритма будет производиться на роботе Turtlebot3. Для робота Инженер необходимо поставить false -->
-	<arg name="is_turtlebot3" default="true"/>
-
 	<node name="rescue_node" pkg="sar" type="rescue_node.py" output="screen">
-		<param name="is_turtlebot3" value="$(arg is_turtlebot3)"/>
-		<!-- meters -->
-		<param name="small_dist_reserve" value="0.01"/> <!-- расстояние в качестве небольшого запаса -->
-		<!-- seconds -->
-		<param name="to_victim_timeout" value="180"/> <!-- верхний предел времени для приближения к пострадавшему -->
-		<param name="at_victim_timeout" value="10"/> <!-- время остановки после приближения к пострадавшему -->
+		<param name="coef_to_victim_timeout" value="$(arg coef_timeout)"/> <!-- коэффициент верхнего предела времени для приближения к пострадавшему -->
+		<param name="small_dist_reserve" value="0.2"/> <!-- расстояние в качестве небольшого запаса (meters) -->
+		<param name="at_victim_timeout" value="10"/> <!-- время остановки после приближения к пострадавшему (seconds) -->
 	</node>
 </launch>

@@ -4,11 +4,11 @@ import rospy
 from hum_det.srv import *
 from sar.srv import *
 import actionlib
-from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from move_base_msgs.msg import MoveBaseAction
 import math
-import tf
 import tf.transformations
 import tf2_ros
+from .utils import get_timeout, load_config, call_action_move_base
 
 # в отчете и тексте по ВКР слово "rescue" заменено на "follow"
 
@@ -30,14 +30,39 @@ z = 0
 f = 0
 tf_buffer = tf2_ros.Buffer()
 count = 0 # нужен для первого возможного некорректного вызова tf_buffer.lookup_transform
+dist_between_bf_lcf = None
+
+
+# максимальное расстояние от центра системы координат base_footprint до границы footprint
+def get_max_to_footprint(footprint):
+	return max(math.hypot(x, y) for x, y in footprint)
+
+
+# расстояние между центрами систем координат base_footprint и левой камеры стереопары. Знак определяется относительно оси X фрейма base_footprint
+def get_dist_between_bf_lcf():
+	try:
+		trans = tf_buffer.lookup_transform(BASE_FRAME, LEFT_CAMERA_FRAME, rospy.Time(0), rospy.Duration(1))
+		rospy.loginfo(f"{NODE_NAME}: get_dist_between_bf_lcf: transform found!")
+		x, y = trans.transform.translation.x, trans.transform.translation.y
+		rospy.loginfo(f"{NODE_NAME}: get_dist_between_bf_lcf: x: {x}")
+		rospy.loginfo(f"{NODE_NAME}: get_dist_between_bf_lcf: y: {y}")
+		d = math.hypot(x, y)
+		if x < 0:
+			d *= -1
+		return d
+	except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+		rospy.logerr(f"{NODE_NAME}: get_dist_between_bf_lcf: transform not found: %s", str(e))
+		return None
+
+
+def wait_at_victim():
+	rospy.loginfo(f"{NODE_NAME}: before at_victim_timeout")
+	rospy.sleep(AT_VICTIM_TIMEOUT)
+	rospy.loginfo(f"{NODE_NAME}: after at_victim_timeout")
 
 
 def get_x(x_pixel, px_pixel, z, f): # расчет смещения по оси X изначального фрейма левой камеры стереопары робота
 	return (px_pixel - x_pixel) * z / f
-
-
-def get_d(x, z): # расчет Евклидова расстояния до объекта
-	return math.sqrt(x ** 2 + z ** 2)
 
 
 def get_alpha(x, z): # расчет угла отклонения объекта от главной оси камеры
@@ -49,11 +74,7 @@ def get_camera_pose():
 
 	while True: # нужен для первого возможного некорректного вызова tf_buffer.lookup_transform
 		try:
-			if IS_TURTLEBOT3:
-				trans = tf_buffer.lookup_transform("map", "wide_stereo_l_stereo_camera_frame", rospy.Time(0), rospy.Duration(1)) # turtlebot3
-			else:
-				# trans = tf_buffer.lookup_transform("engineer/map", "engineer/camera3_link", rospy.Time(0), rospy.Duration(1)) # sim_engineer
-				trans = tf_buffer.lookup_transform("map", "left_camera_link", rospy.Time(0), rospy.Duration(1)) # real_engineer
+			trans = tf_buffer.lookup_transform(MAP_FRAME, LEFT_CAMERA_FRAME, rospy.Time(0), rospy.Duration(1))
 			rospy.loginfo(f"{NODE_NAME}: transform found!")
 			x, y = trans.transform.translation.x, trans.transform.translation.y
 			quaternion = trans.transform.rotation
@@ -81,41 +102,50 @@ def rescue():
 	global px_pixel
 	global z
 	global f
+	global dist_between_bf_lcf
 
 	if not is_on:
 		return
-
-	x = get_x(x_pixel, px_pixel, z, f)
-	rospy.loginfo(f"{NODE_NAME}: x: {x}")
-	d = get_d(x, z)
-	rospy.loginfo(f"{NODE_NAME}: d: {d}")
-	if IS_TURTLEBOT3:
-		dist_between_bf_lcl = 0.075 # m (turtlebot3) расстояние между центрами систем координат base_footprint и левой камеры стереопары. Знак определяется относительно оси X base_footprint
-		max_to_footprint = 0.257 # m (turtlebot3) максимальное расстояние от центра системы координат base_footprint до границы footprint
-	else:
-		dist_between_bf_lcl = -0.129 # m (engineer) расстояние между центрами систем координат base_footprint и левой камеры стереопары. Знак определяется относительно оси X base_footprint
-		max_to_footprint = 0.4565 # m (engineer) максимальное расстояние от центра системы координат base_footprint до границы footprint
-	d = d + dist_between_bf_lcl - max_to_footprint - SMALL_DIST_RESERVE
-	rospy.loginfo(f"{NODE_NAME}: d - {max_to_footprint} - {SMALL_DIST_RESERVE}: {d}")
-	if d > 0:
-		pose = get_camera_pose()
-		if pose:
-			x_camera, y_camera, theta = pose
-			rospy.loginfo(f"{NODE_NAME}: левая камера стереопары робота находится в координатах: x={x_camera}, y={y_camera}, theta={theta}")
-			rospy.loginfo(f"{NODE_NAME}: theta in degrees: {math.degrees(theta)}")
-			alpha = get_alpha(x, z)
-			rospy.loginfo(f"{NODE_NAME}: alpha: {alpha}")
-			rospy.loginfo(f"{NODE_NAME}: alpha in degrees: {math.degrees(alpha)}")
-			x_victim, y_victim = get_victim_coordinates(x_camera, y_camera, theta, d, alpha)
-			rospy.loginfo(f"{NODE_NAME}: координаты пострадавшего: x={x_victim}, y={y_victim}")
-			timeout = rospy.Duration(TO_VICTIM_TIMEOUT)
-			rospy.loginfo(f"{NODE_NAME}: result from move_base: {call_action_move_base(x_victim, y_victim, timeout)}")
-			if x_pixel == -1: # если нода det_img_group_node сама выключила данный процесс, то ничего ждать не нужно
-				rospy.loginfo(f"{NODE_NAME}: rescue completed!")
-				return
-			rospy.loginfo(f"{NODE_NAME}: before at_victim_timeout")
-			rospy.sleep(AT_VICTIM_TIMEOUT)
-			rospy.loginfo(f"{NODE_NAME}: after at_victim_timeout")
+	
+	if dist_between_bf_lcf is None:
+		dist_between_bf_lcf = get_dist_between_bf_lcf()
+	rospy.loginfo(f"{NODE_NAME}: dist_between_bf_lcf: {dist_between_bf_lcf}")
+	if dist_between_bf_lcf:
+		x = get_x(x_pixel, px_pixel, z, f)
+		rospy.loginfo(f"{NODE_NAME}: x: {x}")
+		d = math.hypot(x, z)
+		rospy.loginfo(f"{NODE_NAME}: d: {d}")
+		# if IS_TURTLEBOT3:
+		# 	dist_between_bf_lcf = 0.075
+		# 	max_to_footprint = 0.257
+		# else:
+		# 	dist_between_bf_lcf = -0.129
+		# 	max_to_footprint = 0.4565
+		d = d + dist_between_bf_lcf - MAX_TO_FOOTPRINT - SMALL_DIST_RESERVE
+		rospy.loginfo(f"{NODE_NAME}: d + {dist_between_bf_lcf} - {MAX_TO_FOOTPRINT} - {SMALL_DIST_RESERVE}: {d}")
+		if d > 0:
+			pose = get_camera_pose()
+			if pose:
+				x_camera, y_camera, theta = pose
+				rospy.loginfo(f"{NODE_NAME}: левая камера стереопары робота находится в координатах: x={x_camera}, y={y_camera}, theta={theta}")
+				rospy.loginfo(f"{NODE_NAME}: theta in degrees: {math.degrees(theta)}")
+				alpha = get_alpha(x, z)
+				rospy.loginfo(f"{NODE_NAME}: alpha: {alpha}")
+				rospy.loginfo(f"{NODE_NAME}: alpha in degrees: {math.degrees(alpha)}")
+				x_victim, y_victim = get_victim_coordinates(x_camera, y_camera, theta, d, alpha)
+				rospy.loginfo(f"{NODE_NAME}: координаты пострадавшего: x={x_victim}, y={y_victim}")
+				timeout = get_timeout(MAP_FRAME, BASE_FRAME, x_victim, y_victim, tf_buffer, 0.1)
+				if timeout:
+					timeout *= COEF_TO_VICTIM_TIMEOUT
+				else:
+					timeout = 10
+				rospy.loginfo(f"{NODE_NAME}: result from move_base: {call_action_move_base(MAP_FRAME, x_victim, y_victim, rospy.Duration(timeout), move_base_action_client)}")
+				if x_pixel == -1: # если нода det_img_group_node сама выключила данный процесс, то ничего ждать не нужно
+					rospy.loginfo(f"{NODE_NAME}: rescue completed!")
+					return
+				wait_at_victim()
+		else:
+			wait_at_victim()
 	is_on = False
 	call_rescue_mode_switch_feedback(is_on)
 	rospy.loginfo(f"{NODE_NAME}: rescue completed!")
@@ -151,31 +181,25 @@ def call_rescue_mode_switch_feedback(msg_is_on):
 		rospy.logerr(f"{NODE_NAME}: error from rescue_mode_switch_feedback: %s" % e)
 
 
-def call_action_move_base(x, y, timeout):
-	rospy.loginfo(f"{NODE_NAME}: ===call_action_move_base===")
-	move_base_action_client.wait_for_server()
-	goal = MoveBaseGoal()
-	goal.target_pose.header.frame_id = "map"
-	goal.target_pose.header.stamp = rospy.Time.now()
-	goal.target_pose.pose.position.x = x
-	goal.target_pose.pose.position.y = y
-	goal.target_pose.pose.orientation.w = 1.0
-	move_base_action_client.send_goal(goal)
-	move_base_action_client.wait_for_result(timeout)
-	return move_base_action_client.get_result()
-
-
 if __name__ == '__main__':
 	try:
 		rospy.init_node(NODE_NAME)
-		IS_TURTLEBOT3 = rospy.get_param(NODE_NAME + "/is_turtlebot3")
+		MAP_FRAME = rospy.get_param("map_frame")
+		BASE_FRAME = rospy.get_param("base_frame")
+		LEFT_CAMERA_FRAME = rospy.get_param("left_camera_frame")
+		COEF_TO_VICTIM_TIMEOUT = rospy.get_param(NODE_NAME + "/coef_to_victim_timeout")
 		SMALL_DIST_RESERVE = rospy.get_param(NODE_NAME + "/small_dist_reserve")
-		TO_VICTIM_TIMEOUT = rospy.get_param(NODE_NAME + "/to_victim_timeout")
 		AT_VICTIM_TIMEOUT = rospy.get_param(NODE_NAME + "/at_victim_timeout")
 
 		rescue_mode_switch_server = rospy.Service(RESCUE_MODE_SWITCH_SRV, RescueModeSwitch, handle_rescue_mode_switch)
 
 		tf_listener = tf2_ros.TransformListener(tf_buffer)
+		config = load_config(rospy.get_param("footprint_path"))
+		footprint = config["footprint"]
+		rospy.loginfo(f"{NODE_NAME}: footprint: {footprint}")
+		MAX_TO_FOOTPRINT = get_max_to_footprint(footprint)
+		rospy.loginfo(f"{NODE_NAME}: MAX_TO_FOOTPRINT: {MAX_TO_FOOTPRINT}")
+
 		while True:
 			rescue()
 			rospy.sleep(1)
