@@ -5,7 +5,10 @@ from hum_det.srv import *
 import actionlib
 from move_base_msgs.msg import MoveBaseAction
 import tf2_ros
-from .utils import get_timeout, call_action_move_base
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from utils import get_timeout, call_action_move_base
 
 # в отчете и тексте по ВКР слово "search" заменено на "snake"
 

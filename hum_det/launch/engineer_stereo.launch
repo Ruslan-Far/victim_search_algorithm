@@ -63,7 +63,7 @@
             <env name="ROS_NAMESPACE" value="$(arg stereo_name)"/>
             <param name="approximate_sync" type="bool" value="true"/>
 			<param name="min_disparity" value="24"/> <!-- должен быть >= 1 -->
-			<param name="disparity_range" value="96"/>
+			<param name="disparity_range" value="144"/>
 			<param name="speckle_size" value="1000"/>
         </node>
     </group>
