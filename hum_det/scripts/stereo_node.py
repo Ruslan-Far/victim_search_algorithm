@@ -12,6 +12,8 @@ NORM_DEPTH_MAP_TOPIC = "/depth_map_roi"
 
 STEREO_MODE_SRV = "/stereo_mode"
 
+VALID_PIXELS_THRESHOLD = 0.2
+
 norm_depth_map_pub = rospy.Publisher(NORM_DEPTH_MAP_TOPIC, Image, queue_size=1)
 
 cv_bridge = CvBridge()
@@ -39,16 +41,20 @@ def handle_stereo_mode(req):
 	disp_img_image = cv_bridge.imgmsg_to_cv2(req.disp_img.image, desired_encoding="32FC1") # используется для подсчета расстояния
 	roi = disp_img_image[req.bbox.y:req.bbox.y+req.bbox.h, req.bbox.x:req.bbox.x+req.bbox.w]
 	depth_map = np.where(roi >= req.disp_img.min_disparity, req.disp_img.f * req.disp_img.T / roi, 0)
+	all_pixels = req.bbox.w * req.bbox.h
 	valid_pixels = depth_map[depth_map > 0]
-	if valid_pixels.size > 0:
+	valid_pixels_rate = valid_pixels.size / all_pixels
+	if valid_pixels_rate > VALID_PIXELS_THRESHOLD:
 		median_distance = np.median(valid_pixels) # медиана
 		mean_distance = np.mean(valid_pixels) # среднее значение
 		rospy.loginfo(f"{NODE_NAME}: медианная дистанция: {median_distance}")
 		rospy.loginfo(f"{NODE_NAME}: средняя дистанция: {mean_distance}")
 		distance = median_distance
 	else:
-		rospy.loginfo(f"{NODE_NAME}: нет валидных пикселей в roi!")
+		rospy.loginfo(f"{NODE_NAME}: недостаточно валидных пикселей в roi!")
 		distance = 0
+	rospy.loginfo(f"{NODE_NAME}: valid_pixels_rate: {valid_pixels_rate}")
+	rospy.loginfo(f"{NODE_NAME}: all_pixels: {all_pixels}")
 	rospy.loginfo(f"{NODE_NAME}: valid_pixels.size: {valid_pixels.size}")
 	run_norm_depth_map_pub(req, depth_map) # если будут наблюдаться проблемы с производительностью, то можно закомментировать
 	return StereoModeResponse(distance)

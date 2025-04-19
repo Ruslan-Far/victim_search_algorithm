@@ -3,5 +3,6 @@ int32 x_pixel
 int32 px_pixel
 float32 z
 float32 f
+bool is_person_class
 ---
 int32 code

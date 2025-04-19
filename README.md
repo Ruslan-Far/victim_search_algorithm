@@ -37,10 +37,10 @@
 
 ### Sequence #4: Autonomous Victim Search:
 
-*pay attention: you should set value of the `is_turtlebot3` arg in the `search_rescue.launch` file: **for simulation**: `true`; **for real**: `false`*
+*pay attention: you should set value of the `is_sim` arg in the `search_rescue.launch` file: **for simulation**: `true`; **for real**: `false`*
 
 - **for simulation**: ROS Navigation Stack: `roslaunch sar turtlebot3_move_base.launch`
-- **for real**: ROS Navigation Stack: `rosrun engineer_cmd_vel twist_control_node`
+- **for real**: ROS Navigation Stack (нужно запускать до тех пор, пока не пропадет ошибка **<error>**): `rosrun engineer_cmd_vel twist_control_node`
 - **for real**: ROS Navigation Stack: `roslaunch engineer_navigation_stack engineer_hector.launch`
 - `roslaunch sar search_rescue.launch`
 - `roslaunch hum_det avs_main.launch`

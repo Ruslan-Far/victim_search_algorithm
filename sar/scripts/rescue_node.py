@@ -32,6 +32,7 @@ x_pixel = 0
 px_pixel = 0
 z = 0
 f = 0
+is_person_class = False
 tf_buffer = tf2_ros.Buffer()
 count = 0 # нужен для первого возможного некорректного вызова tf_buffer.lookup_transform
 
@@ -121,6 +122,7 @@ def rescue():
 	global px_pixel
 	global z
 	global f
+	global is_person_class
 
 	if not is_on:
 		return
@@ -142,7 +144,12 @@ def rescue():
 		rospy.loginfo(f"{NODE_NAME}: координаты пострадавшего: x={x_victim}, y={y_victim}")
 		x_base, y_base, _ = base_pose
 		rospy.loginfo(f"{NODE_NAME}: база робота находится в координатах: x={x_base}, y={y_base}")
-		goal_coordinates_and_timeout = get_goal_coordinates_and_timeout(x_base, y_base, x_victim, y_victim, MAX_TO_FOOTPRINT + SMALL_DIST_RESERVE, 0.1)
+		safe_radius = MAX_TO_FOOTPRINT
+		if is_person_class:
+			safe_radius += PERSON_SMALL_DIST_RESERVE
+		else:
+			safe_radius += SMALL_DIST_RESERVE
+		goal_coordinates_and_timeout = get_goal_coordinates_and_timeout(x_base, y_base, x_victim, y_victim, safe_radius, AVG_VEL_X)
 		if goal_coordinates_and_timeout:
 			x_goal, y_goal, timeout = goal_coordinates_and_timeout
 			rospy.loginfo(f"{NODE_NAME}: целевые координаты: x={x_goal}, y={y_goal}")
@@ -181,6 +188,7 @@ def handle_rescue_mode_switch(req):
 	global px_pixel
 	global z
 	global f
+	global is_person_class
 
 	rospy.loginfo(f"{NODE_NAME}: ===handle_rescue_mode_switch===")
 	is_on = req.is_on
@@ -193,6 +201,7 @@ def handle_rescue_mode_switch(req):
 		px_pixel = req.px_pixel
 		z = req.z
 		f = req.f
+		is_person_class = req.is_person_class
 	return RescueModeSwitchResponse(0) # операция прошла успешно
 
 
@@ -213,6 +222,7 @@ if __name__ == '__main__':
 		LEFT_CAMERA_FRAME = rospy.get_param("left_camera_frame")
 		COEF_TO_VICTIM_TIMEOUT = rospy.get_param(NODE_NAME + "/coef_to_victim_timeout")
 		SMALL_DIST_RESERVE = rospy.get_param(NODE_NAME + "/small_dist_reserve")
+		PERSON_SMALL_DIST_RESERVE = rospy.get_param(NODE_NAME + "/person_small_dist_reserve")
 		AT_VICTIM_ANGULAR_SPEED = rospy.get_param(NODE_NAME + "/at_victim_angular_speed")
 		AT_VICTIM_ROTATION_TIMEOUT = rospy.get_param(NODE_NAME + "/at_victim_rotation_timeout")
 		AT_VICTIM_TIMEOUT = rospy.get_param(NODE_NAME + "/at_victim_timeout")
@@ -227,6 +237,9 @@ if __name__ == '__main__':
 		rospy.loginfo(f"{NODE_NAME}: footprint: {footprint}")
 		MAX_TO_FOOTPRINT = get_max_to_footprint(footprint)
 		rospy.loginfo(f"{NODE_NAME}: MAX_TO_FOOTPRINT: {MAX_TO_FOOTPRINT}")
+		config = load_config(rospy.get_param("max_vel_x_path"))
+		AVG_VEL_X = config["DWAPlannerROS"]["max_vel_x"] / 2
+		rospy.loginfo(f"{NODE_NAME}: AVG_VEL_X: {AVG_VEL_X}")
 		while True:
 			rescue()
 			rospy.sleep(1)

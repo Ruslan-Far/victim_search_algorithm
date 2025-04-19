@@ -225,7 +225,7 @@ def start_stereo_rescue_modes(goal_det, msg_img, msg_disp_img):
 	rospy.loginfo(f"distance: {distance}")
 	if distance != -1 and distance != 0:
 		rospy.loginfo("включить rescue_mode через сервис")
-		call_rescue_mode_switch(True, int(msg_box.x + msg_box.w / 2), int(msg_disp_img.image.width / 2), distance, msg_disp_img.f)
+		call_rescue_mode_switch(True, int(msg_box.x + msg_box.w / 2), int(msg_disp_img.image.width / 2), distance, msg_disp_img.f, goal_det[5] == 3)
 		if is_on_rescue:
 			start_time = time.time() # нужно для подстраховки на случай того, если rescue_mode не уведомит о завершении своей работы по каким-либо техническим причинам
 			return
@@ -270,7 +270,7 @@ def det_array_callback(msg):
 	if is_on_rescue:
 		if time.time() - start_time >= 1000: # нужно для подстраховки на случай того, если rescue_mode не уведомит о завершении своей работы по каким-либо техническим причинам
 			rospy.loginfo("2222 выключить rescue_mode через сервис")
-			call_rescue_mode_switch(False, 0, 0, 0, 0)
+			call_rescue_mode_switch(False, 0, 0, 0, 0, False)
 			reset_fields()
 			rospy.loginfo("after 1000 seconds")
 			rospy.loginfo("3333333333333333333 включить search_mode через сервис")
@@ -321,7 +321,7 @@ def handle_det_group_mode_switch(req):
 		rospy.loginfo("2222222222222222 выключить search_mode через сервис")
 		call_search_mode_switch(False)
 		rospy.loginfo("выключить rescue_mode через сервис")
-		call_rescue_mode_switch(False, 0, 0, 0, 0)
+		call_rescue_mode_switch(False, 0, 0, 0, 0, False)
 	return ModeSwitchResponse(0) # операция прошла успешно
 
 
@@ -363,12 +363,12 @@ def call_search_mode_switch(msg_is_on):
 		is_on_search = False
 
 
-def call_rescue_mode_switch(msg_is_on, msg_x, msg_cx, msg_distance, msg_f):
+def call_rescue_mode_switch(msg_is_on, msg_x, msg_cx, msg_distance, msg_f, msg_is_person_class):
 	global is_on_rescue
 
 	rospy.loginfo("===call_rescue_mode_switch===")
 	try:
-		rescue_mode_switch_client(msg_is_on, msg_x, msg_cx, msg_distance, msg_f)
+		rescue_mode_switch_client(msg_is_on, msg_x, msg_cx, msg_distance, msg_f, msg_is_person_class)
 		is_on_rescue = msg_is_on
 	except rospy.ServiceException as e:
 		rospy.logerr("error from rescue_mode_switch: %s" % e)

@@ -8,7 +8,7 @@ import tf2_ros
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils import get_timeout, call_action_move_base
+from utils import get_timeout, load_config, call_action_move_base
 
 # в отчете и тексте по ВКР слово "search" заменено на "snake"
 
@@ -65,7 +65,7 @@ def search():
 		else:
 			x, y = waypoints[0]
 			rospy.loginfo(f"-------{NODE_NAME}: returning to start point: ({x}, {y})")
-		timeout = get_timeout(map_frame, base_frame, x, y, tf_buffer, 0.1)
+		timeout = get_timeout(map_frame, base_frame, x, y, tf_buffer, AVG_VEL_X)
 		if timeout:
 			timeout *= coef_ptp_timeout
 		else:
@@ -95,6 +95,9 @@ if __name__ == '__main__':
 		search_mode_switch_server = rospy.Service(SEARCH_MODE_SWITCH_SRV, ModeSwitch, handle_search_mode_switch)
 
 		tf_listener = tf2_ros.TransformListener(tf_buffer)
+		config = load_config(rospy.get_param("max_vel_x_path"))
+		AVG_VEL_X = config["DWAPlannerROS"]["max_vel_x"] / 2
+		rospy.loginfo(f"-------{NODE_NAME}: AVG_VEL_X: {AVG_VEL_X}")
 		search()
 	except rospy.ROSInterruptException:
 		rospy.loginfo(f"-------{NODE_NAME}: navigation interrupted")

@@ -12,6 +12,7 @@
 		<!-- <param name="base_frame" value="engineer/base_footprint"/> -->
 		<!-- <param name="left_camera_frame" value="engineer/camera3_link"/> -->
 		<param name="footprint_path" value="$(find turtlebot3_navigation)/param/costmap_common_params_waffle.yaml"/>
+		<param name="max_vel_x_path" value="$(find turtlebot3_navigation)/param/dwa_local_planner_params_waffle.yaml"/>
 		<param name="cmd_vel_topic" value="/cmd_vel"/>
 		<param name="x_min" value="-4"/>
 		<param name="x_max" value="-3"/>
@@ -23,6 +24,7 @@
 		<param name="base_frame" value="base_link"/>
 		<param name="left_camera_frame" value="left_camera_link"/>
 		<param name="footprint_path" value="$(find engineer_navigation_stack)/config/costmap_common_params.yaml"/>
+		<param name="max_vel_x_path" value="$(find engineer_navigation_stack)/config/dwa_local_planner_params.yaml"/>
 		<param name="cmd_vel_topic" value="/cmd_vel"/>
 		<param name="x_min" value="0"/>
 		<param name="x_max" value="2"/>
@@ -38,6 +40,7 @@
 	<node name="rescue_node" pkg="sar" type="rescue_node.py" output="screen">
 		<param name="coef_to_victim_timeout" value="$(arg coef_timeout)"/> <!-- коэффициент верхнего предела времени для приближения к пострадавшему -->
 		<param name="small_dist_reserve" value="0.2"/> <!-- расстояние в качестве небольшого запаса (meters) -->
+		<param name="person_small_dist_reserve" value="0.4"/> <!-- расстояние в качестве небольшого запаса для объектов класса person (meters) -->
 		<param name="at_victim_angular_speed" value="0.349"/> <!-- поворачиваться около пострадавшего с указанной скоростью (rad/s) -->
 		<param name="at_victim_rotation_timeout" value="3"/> <!-- поворачиваться около пострадавшего в одну сторону в течение указанного времени (seconds) -->
 		<param name="at_victim_timeout" value="10"/> <!-- время остановки после приближения к пострадавшему (seconds) -->
