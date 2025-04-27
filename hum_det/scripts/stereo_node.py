@@ -12,7 +12,7 @@ NORM_DEPTH_MAP_TOPIC = "/depth_map_roi"
 
 STEREO_MODE_SRV = "/stereo_mode"
 
-VALID_PIXELS_THRESHOLD = 0.2
+VALID_PIXELS_THRESHOLD = 0.1
 
 norm_depth_map_pub = rospy.Publisher(NORM_DEPTH_MAP_TOPIC, Image, queue_size=1)
 

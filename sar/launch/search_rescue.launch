@@ -24,12 +24,17 @@
 		<param name="base_frame" value="base_link"/>
 		<param name="left_camera_frame" value="left_camera_link"/>
 		<param name="footprint_path" value="$(find engineer_navigation_stack)/config/costmap_common_params.yaml"/>
-		<param name="max_vel_x_path" value="$(find engineer_navigation_stack)/config/dwa_local_planner_params.yaml"/>
+		<param name="max_vel_x_path" value="$(find engineer_navigation_stack)/config/local_planner_params.yaml"/>
 		<param name="cmd_vel_topic" value="/cmd_vel"/>
 		<param name="x_min" value="0"/>
 		<param name="x_max" value="2"/>
 		<param name="y_min" value="0"/>
 		<param name="y_max" value="2"/>
+		<!-- использовалось в экспериментах с реальным роботом в кабинете 1409 -->
+		<!-- <param name="x_min" value="0"/>
+		<param name="x_max" value="3"/>
+		<param name="y_min" value="-2"/>
+		<param name="y_max" value="0"/> -->
 	</group>
 
 	<node name="search_node" pkg="sar" type="search_node.py" output="screen">

@@ -41,6 +41,24 @@ def generate_waypoints(x_min, x_max, y_min, y_max, grid_step):
 	return waypoints
 
 
+# использовалось в экспериментах с реальным роботом в кабинете 1409
+# def generate_waypoints(x_min, x_max, y_min, y_max, grid_step):
+# 	waypoints = []
+# 	x = x_min
+# 	direction = 1 # 1 - вправо, -1 - влево
+
+# 	while x <= x_max:
+# 		if direction == 1:
+# 			y_range = range(int(y_max), int(y_min) - 1, -grid_step)
+# 		else:
+# 			y_range = range(int(y_min), int(y_max) + 1, grid_step)
+# 		for y in y_range:
+# 			waypoints.append((x, y))
+# 		x += grid_step
+# 		direction *= -1 # меняем направление
+# 	return waypoints
+
+
 def search():
 	global is_on
 	
@@ -74,6 +92,7 @@ def search():
 		rospy.loginfo(f"-------{NODE_NAME}: result from move_base: {call_action_move_base(map_frame, x, y, rospy.Duration(timeout), move_base_action_client)}")
 		if is_on: # нужно для возобновления движения к точке, которое прервали
 			last_idx += 1
+	move_base_action_client.cancel_goal()
 	rospy.loginfo(f"-------{NODE_NAME}: search completed!")
 
 

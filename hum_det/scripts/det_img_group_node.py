@@ -28,7 +28,7 @@ RESCUE_MODE_SWITCH_FEEDBACK_SRV = "/rescue_mode_switch_feedback"
 MAX_FRAMES = 4
 MIN_DETECTION_RATE = 0.7
 MIN_IOU = 0.8
-MAX_STOP_TIME = 20 # seconds
+MAX_STOP_TIME = 10 # seconds
 MIN_MOVING_TIME = 5 # seconds
 
 goal_det_pub = rospy.Publisher(GOAL_DET_TOPIC, DetArray, queue_size=1)
@@ -209,6 +209,7 @@ def start_stereo_rescue_modes(goal_det, msg_img, msg_disp_img):
 	global is_on_search
 	global is_on_rescue
 	global start_time
+	global is_min_moving
 
 	rospy.loginfo("===start_stereo_rescue_modes===")
 	msg_box = Box()
@@ -232,6 +233,9 @@ def start_stereo_rescue_modes(goal_det, msg_img, msg_disp_img):
 	reset_fields()
 	rospy.loginfo("4444444444444444444 включить search_mode через сервис")
 	call_search_mode_switch(True)
+	if is_on_search: # нужно для того, чтобы иметь возможность подъехать к пострадавшему даже при отказе работы search_mode
+		is_min_moving = True
+		start_time = time.time()
 
 
 def run_goal_det_pub(msg_box, confidence, class_id, msg_img, distance):
