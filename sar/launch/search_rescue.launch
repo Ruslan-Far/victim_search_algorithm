@@ -8,9 +8,6 @@
 		<param name="map_frame" value="map"/>
 		<param name="base_frame" value="base_footprint"/>
 		<param name="left_camera_frame" value="wide_stereo_l_stereo_camera_frame"/>
-		<!-- <param name="map_frame" value="engineer/map"/> -->
-		<!-- <param name="base_frame" value="engineer/base_footprint"/> -->
-		<!-- <param name="left_camera_frame" value="engineer/camera3_link"/> -->
 		<param name="footprint_path" value="$(find turtlebot3_navigation)/param/costmap_common_params_waffle.yaml"/>
 		<param name="max_vel_x_path" value="$(find turtlebot3_navigation)/param/dwa_local_planner_params_waffle.yaml"/>
 		<param name="cmd_vel_topic" value="/cmd_vel"/>

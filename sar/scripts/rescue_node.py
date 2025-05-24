@@ -159,11 +159,8 @@ def rescue():
 			if x_pixel == -1: # если нода det_img_group_node сама выключила данный процесс, то ничего ждать не нужно
 				rospy.loginfo(f"{NODE_NAME}: rescue completed!")
 				return
-			rotate_at_victim()
-			wait_at_victim()
-		else:
-			rotate_at_victim()
-			wait_at_victim()
+		rotate_at_victim()
+		wait_at_victim()
 	is_on = False
 	call_rescue_mode_switch_feedback(is_on)
 	rospy.loginfo(f"{NODE_NAME}: rescue completed!")

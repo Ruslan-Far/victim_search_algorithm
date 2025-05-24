@@ -50,7 +50,7 @@
 ### Sequence #1: ROS Navigation Stack:
 
 - **for simulation**: `roslaunch sar turtlebot3_rviz.launch`
-- **for real**: `roslaunch sar real_engineer_rviz.launch`
+- **for real**: `roslaunch sar engineer_rviz.launch`
 
 ### Sequence #2: necessary ROS image topics:
 

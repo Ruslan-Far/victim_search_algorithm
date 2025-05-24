@@ -1,3 +1,4 @@
-<launch>    
-	<include file="$(find engineer_description)/launch/run_multi_engineer_rviz.launch"/>
+<launch>
+	<node name="engineer_rviz" pkg="rviz" type="rviz" output="screen"
+			args="-d $(find sar)/rviz/engineer.rviz" />
 </launch>
