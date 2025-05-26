@@ -8,7 +8,7 @@
 
 ## Dependencies
 
-- clone repo from `https://gitlab.com/lirs-kfu/lirs-ros-video-streaming.git` to your workspace (on engineer robot) and build it
+- clone repo (`from_engineer` branch) from `https://gitlab.com/lirs-kfu/lirs-ros-video-streaming.git` to your workspace (on engineer robot) and build it
 - clone repo (`server` branch) from `https://gitlab.com/lirs-kfu/servosila-engineer-robot-motion.git` to your workspace (on engineer robot) and build it
 
 ## Build
